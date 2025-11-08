@@ -25,12 +25,21 @@ object RealmBlockchainRepository {
     /** Reactive stream of blocks sorted by index */
     val blocksFlow: Flow<List<BlockRealm>> =
         realm.query(BlockRealm::class).sort("index", Sort.ASCENDING).asFlow().map { it.list }
-
+    // ✅ Add this after blocksFlow
+    val balanceFlow: kotlinx.coroutines.flow.Flow<Double> =
+        realm.query(BalanceRealm::class, "id == 1")
+            .asFlow()
+            .map { it.list.firstOrNull()?.balance ?: 0.0 }
     /** Call once on startup */
     suspend fun ensureGenesis() {
         val first = realm.query(BlockRealm::class, "index == 0").first().find()
         if (first == null) {
             realm.write {
+                val bal = query(BalanceRealm::class, "id == 1").first().find()
+                    ?: copyToRealm(BalanceRealm().apply {
+                        id = 1
+                        balance = 0.0
+                    })
                 val genesis = BlockRealm().apply {
                     index = 0
                     timestamp = System.currentTimeMillis()
@@ -41,6 +50,7 @@ object RealmBlockchainRepository {
                 copyToRealm(genesis)
             }
         }
+
     }
 
     /** Add a mined block for the given order (run off main thread) */
@@ -129,5 +139,38 @@ object RealmBlockchainRepository {
         addOrder(order) // ✅ Store in blockchain (Realm)
         updateBalance(amount) // ✅ Increase balance
     }
+    // ---- Purchase result ----
+    sealed class PurchaseResult {
+        object Success : PurchaseResult()
+        data class InsufficientBalance(val needed: Double, val current: Double) : PurchaseResult()
+        data class Error(val message: String, val cause: Throwable? = null) : PurchaseResult()
+    }
+
+    // ---- Handle purchase (deduct balance + add block) ----
+    suspend fun purchase(order: Order): PurchaseResult {
+        return try {
+            val currentBalance = getBalance()
+
+            // Not enough balance
+            if (currentBalance < order.total) {
+                return PurchaseResult.InsufficientBalance(
+                    needed = order.total - currentBalance,
+                    current = currentBalance
+                )
+            }
+
+            // Record order in blockchain
+            addOrder(order)
+
+            // Deduct wallet balance
+            updateBalance(-order.total)
+
+            PurchaseResult.Success
+
+        } catch (e: Exception) {
+            PurchaseResult.Error("Purchase failed", e)
+        }
+    }
+
 
 }

@@ -2,12 +2,20 @@ package com.example.coffeeapp
 
 import android.R.attr.type
 import android.app.AlertDialog
+import androidx.compose.animation.*
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -15,10 +23,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Notifications
@@ -26,6 +36,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -64,6 +75,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         lifecycleScope.launch {
             com.example.coffeeapp.blockchain.RealmBlockchainRepository.ensureGenesis()
+//            RealmBlockchainRepository.ensureGenesis()
         }
         enableEdgeToEdge()
         FirebaseApp.initializeApp(this)
@@ -76,6 +88,7 @@ class MainActivity : ComponentActivity() {
                     // Content goes here
                     NavHost(
                         navController = navController,
+//                        startDestination = "login",
                         startDestination = "login",
                         modifier = Modifier.padding(innerPadding)
                     ) {
@@ -140,7 +153,7 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
 
-                            OrderConfirmationScreen(navController = navController, orderItems = orderItems)
+                            OrderConfirmationScreen(navController = navController)
                         }
                         composable("detail") { backStackEntry ->
                             val coffee = navController.previousBackStackEntry
@@ -410,6 +423,12 @@ class MainActivity : ComponentActivity() {
                         composable("setting") {
                             SettingPage(navController)
                         }
+                        composable("head") {
+                            Head(navController)
+                        }
+                        composable("navbar") {
+                            NaviBar(navController)
+                        }
 
                     }
                 }
@@ -417,60 +436,23 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-
-    @Composable
-    fun Head(navController: NavHostController) {
-
-        Row(
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Image(
-                painter = painterResource(R.drawable.cafe),
-                contentDescription = null,
-                modifier = Modifier.size(150.dp)
-            )
-            Spacer(
-                modifier = Modifier.width(150.dp)
-            )
-            IconButton(onClick = {
-                navController.navigate("notification")
-            }) {
-                Icon(
-                    Icons.Default.Notifications,
-                    contentDescription = null,
-                    modifier = Modifier.size(35.dp)
-                )
-            }
-            IconButton(onClick = {
-                navController.navigate("cart")
-            }) {
-                Icon(
-                    Icons.Default.ShoppingCart,
-                    contentDescription = null,
-                    modifier = Modifier.size(35.dp)
-                )
-            }
-        }
-
-    }
     @Composable
     fun showBalance() {
-        val balance = remember { mutableStateOf(0.0) }
+        val balanceState = remember { mutableStateOf(0.0) }
 
         LaunchedEffect(Unit) {
-            balance.value = RealmBlockchainRepository.getBalance()
+            balanceState.value = RealmBlockchainRepository.getBalance()
         }
 
-        Card(
+        val bal = balanceState.value   // <-- unwrap the state
+
+        Card (
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 10.dp)
                 .height(90.dp)
-            ,
-
+                .padding(horizontal = 16.dp),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF6A4E39)) // coffee brown
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF6A4E39))
         ) {
             Row(
                 Modifier.fillMaxSize().padding(16.dp),
@@ -479,28 +461,27 @@ class MainActivity : ComponentActivity() {
             ) {
                 Column {
                     Text(
-                        text = "Your Balance",
+                        text = "Wallet Balance",
                         color = Color(0xFFEED9C4), // latte cream
                         fontSize = 14.sp
                     )
-
                     Text(
-                        text = "$${"%.2f".format(balance.value)}",
-                        color = Color.White,
-                        fontSize = 30.sp,
-                        fontWeight = FontWeight.Bold
+                        text = "$${"%.2f".format(bal)}",   // <-- use bal, not balanceState
+                        style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.White)
                     )
-                }
 
+                }
                 Icon(
-                    painter = painterResource(id = R.drawable.wallets), // create if not exist
-                    contentDescription = "Wallet",
+                    painter = painterResource(id = R.drawable.wallet), // replace with your icon
+//                    imageVector = Icons.Default.AccountBalanceWallet,
+                    contentDescription = null,
                     tint = Color(0xFFEED9C4),
-                    modifier = Modifier.size(40.dp)
+                    modifier = Modifier.size(36.dp)
                 )
             }
         }
     }
+
 
     @Composable
     fun Body() {
@@ -515,113 +496,7 @@ class MainActivity : ComponentActivity() {
         )
     }
 
-    @Composable
-    fun NaviBar(navController: androidx.navigation.NavHostController) {
-        var selectedItem by remember { mutableStateOf(0) }
-        NavigationBar(
-        ) {
 
-            NavigationBarItem(
-                selected = selectedItem == 0,
-                onClick = {
-                    selectedItem = 0
-                    navController.navigate("home") {
-                        launchSingleTop = true
-                        popUpTo(navController.graph.startDestinationId) { saveState = true }
-                        restoreState = true
-                    }
-                },
-
-                icon = {
-                    Icon(
-                        painterResource(id = R.drawable.home),
-                        contentDescription = null,
-                        modifier = Modifier.size(30.dp)
-                    )
-                },
-                label = { Text("Home") },
-
-                )
-            NavigationBarItem(
-                selected = selectedItem == 1,
-                onClick = {
-                    selectedItem = 1
-                    navController.navigate("card") {
-                        launchSingleTop = true
-                        popUpTo(navController.graph.startDestinationId) { saveState = true }
-                        restoreState = true
-                    }
-                },
-                icon = {
-                    Icon(
-                        painterResource(id = R.drawable.card),
-                        contentDescription = null,
-                        modifier = Modifier.size(30.dp)
-                    )
-                },
-                label = { Text("Card") },
-
-                )
-            NavigationBarItem(
-                selected = selectedItem == 2,
-                onClick = {
-                    selectedItem = 2
-                    navController.navigate("scan") {
-                        launchSingleTop = true
-                        popUpTo(navController.graph.startDestinationId) { saveState = true }
-                        restoreState = true
-                    }
-                },
-                icon = {
-                    Icon(
-                        painterResource(id = R.drawable.scanning),
-                        contentDescription = null,
-                        modifier = Modifier.size(30.dp)
-                    )
-                },
-                label = { Text("Scan") },
-
-                )
-            NavigationBarItem(
-                selected = selectedItem == 3,
-                onClick = {
-                    selectedItem = 3
-                    navController.navigate("topup") {
-                        launchSingleTop = true
-                        popUpTo(navController.graph.startDestinationId) { saveState = true }
-                        restoreState = true
-                    }
-                },
-                icon = {
-                    Icon(
-                        painterResource(id = R.drawable.wallet),
-                        contentDescription = null,
-                        modifier = Modifier.size(30.dp)
-                    )
-                },
-                label = { Text("Top Up") },
-            )
-            NavigationBarItem(
-                selected = selectedItem == 4,
-                onClick = {
-                    selectedItem = 4
-                    navController.navigate("setting") {
-                        launchSingleTop = true
-                        popUpTo(navController.graph.startDestinationId) { saveState = true }
-                        restoreState = true
-                    }
-                },
-                icon = {
-                    Icon(
-                        painterResource(id = R.drawable.user),
-                        contentDescription = null,
-                        modifier = Modifier.size(30.dp)
-                    )
-                },
-                label = { Text("Setting") },
-            )
-        }
-    }
 
     @Preview(showBackground = true)
     @Composable

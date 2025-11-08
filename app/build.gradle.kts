@@ -63,6 +63,7 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.navigation:navigation-compose:2.8.0")
+    implementation("androidx.compose.animation:animation:1.7.5")
 
     // --- Firebase ---
     implementation(platform("com.google.firebase:firebase-bom:33.1.2"))

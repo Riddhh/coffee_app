@@ -1,4 +1,3 @@
-// CartPage.kt
 package com.example.coffeeapp
 
 import android.widget.Toast
@@ -24,10 +23,15 @@ import coil.compose.rememberAsyncImagePainter
 fun CartPage(navController: NavHostController) {
     val cartItems = cartManager.items
 
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .padding(12.dp)) {
+    val total by remember {
+        derivedStateOf { cartItems.sumOf { it.price * it.quantity } }
+    }
 
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(12.dp)
+    ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = { navController.popBackStack() }) {
                 Icon(Icons.Default.ArrowBackIosNew, contentDescription = null)
@@ -36,7 +40,7 @@ fun CartPage(navController: NavHostController) {
         }
 
         LazyColumn {
-            items(cartItems) { item ->
+            items(cartItems, key = { it.name + it.size }) { item ->
                 ListItem(
                     headlineContent = {
                         Text("${item.name} (${item.size})", fontWeight = FontWeight.Bold)
@@ -55,12 +59,15 @@ fun CartPage(navController: NavHostController) {
                     trailingContent = {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             IconButton(onClick = {
-                                if (item.quantity > 1) item.quantity--
+                                if (item.quantity > 1)
+                                    cartManager.updateQuantity(item, item.quantity - 1)
                             }) {
                                 Icon(Icons.Default.RemoveCircle, contentDescription = null)
                             }
                             Text("${item.quantity}", fontSize = 18.sp)
-                            IconButton(onClick = { item.quantity++ }) {
+                            IconButton(onClick = {
+                                cartManager.updateQuantity(item, item.quantity + 1)
+                            }) {
                                 Icon(Icons.Default.AddCircle, contentDescription = null)
                             }
                             IconButton(onClick = { cartManager.removeItem(item) }) {
@@ -74,12 +81,19 @@ fun CartPage(navController: NavHostController) {
         }
 
         Spacer(modifier = Modifier.weight(1f))
+
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text("Total:", fontWeight = FontWeight.Bold, fontSize = 20.sp)
-            Text("$${"%.2f".format(cartManager.totalPrice())}", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+            Text(
+                "$${"%.2f".format(total)}",
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp
+            )
         }
 
         Button(
@@ -89,16 +103,15 @@ fun CartPage(navController: NavHostController) {
                     return@Button
                 }
 
-                // Convert to Parcelable list
                 val parcelableItems = cartItems.map {
                     cartItem(it.name, it.img, it.price, it.size, it.quantity)
                 }
 
-                // Pass list to OrderConfirmation screen
                 navController.currentBackStackEntry?.arguments?.putParcelableArrayList(
                     "orderItems",
                     ArrayList(parcelableItems)
                 )
+
                 navController.navigate("order_confirmation")
             },
             modifier = Modifier
