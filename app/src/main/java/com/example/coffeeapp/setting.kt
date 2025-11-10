@@ -45,13 +45,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun SettingPage(navController: NavHostController){
     var showDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
-    val auth = FirebaseAuth.getInstance()
+
     var isOn by remember { mutableStateOf(false) }
     var isOnn by remember { mutableStateOf(false) }
     Column(
@@ -342,7 +341,7 @@ fun SettingPage(navController: NavHostController){
                 confirmButton = {
                     TextButton(onClick = {
                         showDialog = false
-                        auth.signOut()
+//                        auth.signOut()
                         Toast.makeText(
                             context, "Logged out", Toast.LENGTH_SHORT
                         ).show()

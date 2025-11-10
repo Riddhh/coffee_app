@@ -1,29 +1,16 @@
 package com.example.coffeeapp
 
-import android.R.attr.type
-import android.app.AlertDialog
-import androidx.compose.animation.*
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
+
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.Image
+
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
+
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
@@ -31,11 +18,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.ShoppingCart
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -44,7 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
+
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -54,15 +40,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import com.example.coffeeapp.ui.theme.CoffeeAppTheme
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
 import com.example.coffeeapp.blockchain.RealmBlockchainRepository
-import com.google.firebase.FirebaseApp
-import com.google.firebase.auth.FirebaseAuth
+
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanIntentResult
 import com.journeyapps.barcodescanner.ScanOptions
@@ -78,13 +65,36 @@ class MainActivity : ComponentActivity() {
 //            RealmBlockchainRepository.ensureGenesis()
         }
         enableEdgeToEdge()
-        FirebaseApp.initializeApp(this)
+
         setContent {
             CoffeeAppTheme {
                 val navController = rememberNavController1()
+                // NEW: auth
+                val authVm: com.example.coffeeapp.auth.AuthViewModel =
+                    androidx.lifecycle.viewmodel.compose.viewModel()
+                val authState = authVm.state.collectAsState().value
+
+                val bottomBarRoutes = setOf(
+                    "home","card","scan","topup","setting",
+                    "transactionHistory","cart","notification","hot","cold","frappe","cake"
+                )
+                val navBackStackEntry by navController.currentBackStackEntryAsState()
+                val currentRoute = navBackStackEntry?.destination?.route
+
+// Auto-redirect to home if already logged in
+                LaunchedEffect(authState.isAuthed) {
+                    if (authState.isAuthed && currentRoute == "login") {
+                        navController.navigate("home") { popUpTo("login") { inclusive = true } }
+                    }
+                }
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
-                    bottomBar = { NaviBar(navController) }) { innerPadding ->
+                    bottomBar = {
+                        if (currentRoute in bottomBarRoutes) {
+                            NaviBar(navController)
+                        }
+
+                    }) { innerPadding ->
                     // Content goes here
                     NavHost(
                         navController = navController,

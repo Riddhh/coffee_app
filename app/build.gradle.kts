@@ -4,7 +4,6 @@ plugins {
     id("kotlin-parcelize")
     id("org.jetbrains.kotlin.plugin.serialization")
     id("com.google.gms.google-services")
-
     id("io.realm.kotlin")
 }
 
@@ -51,6 +50,7 @@ android {
 
 }
 
+
 dependencies {
     // --- Android & Compose ---
     implementation(libs.androidx.core.ktx)
@@ -64,27 +64,33 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.navigation:navigation-compose:2.8.0")
     implementation("androidx.compose.animation:animation:1.7.5")
+    implementation(platform("androidx.compose:compose-bom:2024.06.00"))
+    implementation("androidx.activity:activity-compose:1.9.2")
 
-    // --- Firebase ---
-    implementation(platform("com.google.firebase:firebase-bom:33.1.2"))
-    implementation("com.google.firebase:firebase-analytics")
-    implementation("com.google.firebase:firebase-auth")
-    implementation("com.google.firebase:firebase-firestore")
-    implementation("com.google.firebase:firebase-storage")
-    // Force Play Services libs to match Kotlin 1.9
-    implementation("com.google.android.gms:play-services-measurement-api:21.5.0")
-    implementation("com.google.android.gms:play-services-measurement-impl:21.5.0")
+    // --- Ktor Client for Android ---
+    implementation("io.ktor:ktor-client-core:2.3.12")
+    implementation("io.ktor:ktor-client-cio:2.3.12")
+    implementation("io.ktor:ktor-client-content-negotiation:2.3.12")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.12")
+
 
     // --- QR Code (ZXing) ---
     implementation("com.journeyapps:zxing-android-embedded:4.3.0")
 
-    // --- Ktor Networking ---
-    implementation("io.ktor:ktor-client-core:2.3.9")
-    implementation("io.ktor:ktor-client-cio:2.3.9")
-    implementation("io.ktor:ktor-client-content-negotiation:2.3.9")
-    implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.9")
+    // --- Secure storage / misc ---
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
+    implementation("io.coil-kt:coil-compose:2.6.0")
+    implementation("io.realm.kotlin:library-base:1.16.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
+    implementation("com.google.code.gson:gson:2.11.0")
 
-    // --- Kotlinx Serialization ---
+    // --- Networking (Retrofit only) ---
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-moshi:2.11.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+
+    // --- Kotlinx Serialization (for other parts of your app) ---
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.6.3")
 
@@ -97,24 +103,21 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
-    implementation("io.coil-kt:coil-compose:2.6.0")
+    // Fix for Guava "9999.0-empty-to-avoid-conflict"
+    implementation("com.google.guava:listenablefuture:1.0")
 
-    implementation("io.realm.kotlin:library-base:1.16.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
-    implementation("com.google.code.gson:gson:2.11.0")
 
-    implementation(platform("androidx.compose:compose-bom:2024.06.00"))
 
-    implementation("androidx.activity:activity-compose:1.9.2")
 
+    // Keep your resolutionStrategy if you need to force serialization versions
     configurations.configureEach {
         resolutionStrategy {
             force(
                 "org.jetbrains.kotlinx:kotlinx-serialization-core:1.6.3",
                 "org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3",
-                "org.jetbrains.kotlinx:kotlinx-serialization-encoding:1.6.3"
+                "org.jetbrains.kotlinx:kotlinx-serialization-encoding:1.6.3",
+                "com.google.guava:listenablefuture:1.0"
             )
         }
     }
-
 }
