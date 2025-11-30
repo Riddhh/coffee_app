@@ -1,5 +1,8 @@
+@file:OptIn(ExperimentalFoundationApi::class)
 package com.example.coffeeapp
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import kotlin.OptIn
 import android.widget.Toast
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
@@ -121,7 +124,7 @@ fun TransactionHistoryScreen(navController: NavHostController) {
         }
     }
 }
-
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun BlockCard(
     block: BlockRealm,
