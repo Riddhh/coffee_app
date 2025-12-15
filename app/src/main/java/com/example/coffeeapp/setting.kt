@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Contacts
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.History
@@ -107,6 +108,30 @@ fun SettingPage(navController: NavHostController){
                 )
             }
         }
+        Button(onClick = { navController.navigate("order_history") },modifier = Modifier
+            .fillMaxWidth()
+            .padding(10.dp)
+            .height(60.dp),
+            shape = RoundedCornerShape(10.dp),
+
+            contentPadding = PaddingValues(0.dp)) {
+            Row(modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp), // optional: add some left spacing
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+//                    painter = painterResource(id = R.drawable.user),
+                    imageVector = Icons.Default.Book,
+                    contentDescription = null,
+                    modifier = Modifier.size(30.dp)
+                )
+                Spacer(Modifier.width(10.dp))
+                Text("Order History",style = TextStyle(
+                    fontSize = 20.sp, fontWeight = FontWeight.Bold))
+            }
+        }
+
         Button(
             onClick = { navController.navigate("transactionHistory") },
             modifier = Modifier
@@ -177,41 +202,12 @@ fun SettingPage(navController: NavHostController){
                 )
             }
         }
-//        Button(
-//            onClick = { /* Handle click */ },
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .padding(10.dp)
-//                .height(60.dp),
-//            shape = RoundedCornerShape(10.dp),
-//
-//            contentPadding = PaddingValues(0.dp) // 👈 remove internal padding
-//        ) {
-//            Row(
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .padding(start = 16.dp), // optional: add some left spacing
-//                horizontalArrangement = Arrangement.Start,
-//                verticalAlignment = Alignment.CenterVertically
-//            ) {
-//                Icon(
-//                    imageVector = Icons.Default.Notifications,
-//                    contentDescription = null,
-//                    modifier = Modifier.size(30.dp)
-//                )
-//                Spacer(Modifier.width(10.dp))
-//                Text(
-//                    "Notification", style = TextStyle(
-//                        fontSize = 20.sp, fontWeight = FontWeight.Bold
-//                    )
-//                )
-//
-//            }
-//        }
         Box(
-            modifier = Modifier.padding(10.dp)
+            modifier = Modifier
+                .padding(10.dp)
                 .height(60.dp)
-                .background(color = Color(0xFF465e91),
+                .background(
+                    color = Color(0xFF465e91),
                     shape = RoundedCornerShape(10.dp),
                 )) {
             Row(
@@ -247,45 +243,45 @@ fun SettingPage(navController: NavHostController){
                 )
             }
         }
-        Box(
-            modifier = Modifier.padding(10.dp)
-                .height(60.dp)
-                .background(color = Color(0xFF465e91),
-                    shape = RoundedCornerShape(10.dp),
-                )) {
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(start = 16.dp, end = 12.dp),
-
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically,) {
-                    Icon(
-                        imageVector = Icons.Default.DarkMode,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(30.dp)
-                    )
-                    Spacer(Modifier.width(10.dp))
-                    Text(
-                        "Dark Mode",
-                        style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                    )
-                }
-                Switch(
-                    checked = isOnn,
-                    onCheckedChange = { isOnn = it },
-
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = Color.Red,
-                        uncheckedThumbColor = Color.DarkGray,
-                        checkedTrackColor = Color.Cyan
-                    )
-                )
-            }
-        }
+//        Box(
+//            modifier = Modifier.padding(10.dp)
+//                .height(60.dp)
+//                .background(color = Color(0xFF465e91),
+//                    shape = RoundedCornerShape(10.dp),
+//                )) {
+//            Row(
+//                modifier = Modifier
+//                    .fillMaxSize()
+//                    .padding(start = 16.dp, end = 12.dp),
+//
+//                verticalAlignment = Alignment.CenterVertically,
+//                horizontalArrangement = Arrangement.SpaceBetween
+//            ) {
+//                Row(verticalAlignment = Alignment.CenterVertically,) {
+//                    Icon(
+//                        imageVector = Icons.Default.DarkMode,
+//                        contentDescription = null,
+//                        tint = Color.White,
+//                        modifier = Modifier.size(30.dp)
+//                    )
+//                    Spacer(Modifier.width(10.dp))
+//                    Text(
+//                        "Dark Mode",
+//                        style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.White)
+//                    )
+//                }
+//                Switch(
+//                    checked = isOnn,
+//                    onCheckedChange = { isOnn = it },
+//
+//                    colors = SwitchDefaults.colors(
+//                        checkedThumbColor = Color.Red,
+//                        uncheckedThumbColor = Color.DarkGray,
+//                        checkedTrackColor = Color.Cyan
+//                    )
+//                )
+//            }
+//        }
         Button(
             onClick = { navController.navigate("aboutus") },
             modifier = Modifier

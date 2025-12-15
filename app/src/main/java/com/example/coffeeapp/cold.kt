@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -70,9 +71,19 @@ fun ColdScreen(navController: NavHostController) {
                                 )
                             },
                             leadingContent = {
+//                                Image(
+//                                    painter = rememberAsyncImagePainter(cafe.image),
+//                                    contentDescription = null,
+//                                    contentScale = ContentScale.Crop,
+//                                    modifier = Modifier.size(69.dp)
+//                                )
                                 Image(
-                                    painter = rememberAsyncImagePainter(cafe.image),
-                                    contentDescription = null,
+                                    painter = rememberAsyncImagePainter(
+                                        model = cafe.image,
+                                        placeholder = painterResource(R.drawable.cold),
+                                        error = painterResource(R.drawable.cold)
+                                    ),
+                                    contentDescription = cafe.name,
                                     contentScale = ContentScale.Crop,
                                     modifier = Modifier.size(69.dp)
                                 )

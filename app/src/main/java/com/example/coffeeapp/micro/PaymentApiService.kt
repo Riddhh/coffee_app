@@ -9,4 +9,14 @@ interface PaymentApiService {
     suspend fun topUpTest(
         @Body request: TopUpRequestDto
     ): TopUpResponseDto
+
+    @POST("/api/topup/verify")
+    suspend fun verifyTopUp(
+        @Body request: VerifyReceiptRequestDto
+    ): VerifyReceiptResponseDto
+
+    @POST("/api/topup/consume")
+    suspend fun consumeTopUp(
+        @Body request: ConsumeReceiptRequestDto
+    ): ConsumeReceiptResponseDto
 }

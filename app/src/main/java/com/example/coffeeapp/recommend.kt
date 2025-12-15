@@ -2,6 +2,7 @@ package com.example.coffeeapp
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -16,11 +17,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
 
 @Composable
-fun Recommend() {
-    val scrollState = rememberScrollState()
-    Column(modifier = Modifier.verticalScroll(scrollState)) {
+fun Recommend(navController: NavHostController) {
+//    val scrollState = rememberScrollState()
+    Column(modifier = Modifier.fillMaxWidth()) {
         ListItem(
             headlineContent = {
                 Text(
@@ -47,40 +49,7 @@ fun Recommend() {
                 )
             },
             trailingContent = {
-                Button(onClick = {}) {
-                    Text("Shop Now")
-                }
-            }
-
-
-        )
-        ListItem(
-            headlineContent = {
-                Text(
-                    "Iced Latte",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp
-                )
-            },
-            supportingContent = {
-                Text(
-                    "3.21$",
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 16.sp,
-                    color = Color(0xFFA4A9AD)
-                )
-            },
-            leadingContent = {
-                Image(
-                    painter = painterResource(R.drawable.latte),
-                    contentDescription = null,
-                    modifier = Modifier.size(80.dp),
-                    contentScale = ContentScale.Fit
-
-                )
-            },
-            trailingContent = {
-                Button(onClick = {}) {
+                Button(onClick = {navController.navigate("cold")}) {
                     Text("View More")
                 }
             }
@@ -90,14 +59,14 @@ fun Recommend() {
         ListItem(
             headlineContent = {
                 Text(
-                    "Iced Latte",
+                    "Matcha Latte",
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp
                 )
             },
             supportingContent = {
                 Text(
-                    "3.21$",
+                    "3.45$",
                     fontWeight = FontWeight.Medium,
                     fontSize = 16.sp,
                     color = Color(0xFFA4A9AD)
@@ -105,7 +74,7 @@ fun Recommend() {
             },
             leadingContent = {
                 Image(
-                    painter = painterResource(R.drawable.latte),
+                    painter = painterResource(R.drawable.icedmatchalatte),
                     contentDescription = null,
                     modifier = Modifier.size(80.dp),
                     contentScale = ContentScale.Fit
@@ -113,8 +82,41 @@ fun Recommend() {
                 )
             },
             trailingContent = {
-                Button(onClick = {}) {
-                    Text("Shop Now")
+                Button(onClick = {navController.navigate("cold")}) {
+                    Text("View More")
+                }
+            }
+
+
+        )
+        ListItem(
+            headlineContent = {
+                Text(
+                    "Matcha Tiramisu",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp
+                )
+            },
+            supportingContent = {
+                Text(
+                    "3.95$",
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 16.sp,
+                    color = Color(0xFFA4A9AD)
+                )
+            },
+            leadingContent = {
+                Image(
+                    painter = painterResource(R.drawable.matchatira),
+                    contentDescription = null,
+                    modifier = Modifier.size(80.dp),
+                    contentScale = ContentScale.Fit
+
+                )
+            },
+            trailingContent = {
+                Button(onClick = {navController.navigate("cake")}) {
+                    Text("View More")
                 }
             }
 

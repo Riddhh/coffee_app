@@ -13,7 +13,7 @@ object Http {
             .build()
 
         return Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:8080") // Emulator→your laptop localhost. On device, use your LAN IP.
+            .baseUrl("http://10.0.2.2:3001/") // Emulator→your laptop localhost. On device, use your LAN IP.
             .client(client)
             .addConverterFactory(MoshiConverterFactory.create())
             .build()

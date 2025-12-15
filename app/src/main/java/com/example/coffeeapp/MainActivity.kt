@@ -1,36 +1,31 @@
 package com.example.coffeeapp
 
-
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBalanceWallet
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
-
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -40,65 +35,77 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
-import com.example.coffeeapp.ui.theme.CoffeeAppTheme
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
+import coil.compose.AsyncImage
 import com.example.coffeeapp.blockchain.RealmBlockchainRepository
-
+import com.example.coffeeapp.ui.theme.CoffeeAppTheme
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanIntentResult
 import com.journeyapps.barcodescanner.ScanOptions
 import kotlinx.coroutines.launch
+import java.util.Calendar
+import androidx.compose.ui.layout.ContentScale
+import com.example.coffeeapp.card.CardScreen
+import com.example.coffeeapp.micro.TopUpQrScreen
+import com.example.coffeeapp.order.OrderHistoryScreen
 import androidx.navigation.compose.rememberNavController as rememberNavController1
 
 class MainActivity : ComponentActivity() {
+
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         lifecycleScope.launch {
-            com.example.coffeeapp.blockchain.RealmBlockchainRepository.ensureGenesis()
-//            RealmBlockchainRepository.ensureGenesis()
+            RealmBlockchainRepository.ensureGenesis()
         }
+
         enableEdgeToEdge()
 
         setContent {
             CoffeeAppTheme {
                 val navController = rememberNavController1()
+                var hasShownDrinkPopup by rememberSaveable { mutableStateOf(false) }
+
                 // NEW: auth
                 val authVm: com.example.coffeeapp.auth.AuthViewModel =
                     androidx.lifecycle.viewmodel.compose.viewModel()
                 val authState = authVm.state.collectAsState().value
 
                 val bottomBarRoutes = setOf(
-                    "home","card","scan","topup","setting",
-                    "transactionHistory","cart","notification","hot","cold","frappe","cake"
+                    "home?fromLogin={fromLogin}", // ✅ match route string
+                    "card", "scan", "topup", "setting",
+                    "transactionHistory", "cart", "notification",
+                    "hot", "cold", "frappe", "cake"
                 )
+
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
 
-// Auto-redirect to home if already logged in
+                // Auto-redirect to home if already logged in
                 LaunchedEffect(authState.isAuthed) {
                     if (authState.isAuthed && currentRoute == "login") {
-                        navController.navigate("home") { popUpTo("login") { inclusive = true } }
+                        navController.navigate("home?fromLogin=true") {
+                            popUpTo("login") { inclusive = true }
+                        }
                     }
                 }
+
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     bottomBar = {
                         if (currentRoute in bottomBarRoutes) {
                             NaviBar(navController)
                         }
-
-                    }) { innerPadding ->
-                    // Content goes here
+                    }
+                ) { innerPadding ->
                     NavHost(
                         navController = navController,
-//                        startDestination = "login",
                         startDestination = "login",
                         modifier = Modifier.padding(innerPadding)
                     ) {
@@ -114,69 +121,49 @@ class MainActivity : ComponentActivity() {
                         composable("forget") {
                             ForgetPw(navController)
                         }
-                        composable("home") {
 
-                            Column(
-                                modifier = Modifier.fillMaxSize()
-                            ) {
-                                Head(navController)
-                                showBalance()
-                                Spacer(Modifier.height(12.dp))
-                                Body()
-                                Spacer(Modifier.height(20.dp))
-                                InputField()
-                                Spacer(Modifier.height(10.dp))
-                                Text(
-                                    "Menu",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 23.sp,
-                                    modifier = Modifier.padding(15.dp)
-                                )
-//                                Spacer(Modifier.height(15.dp))
-                                Cat(navController)
-                                Text(
-                                    text = "Recommended",
-                                    modifier = Modifier.padding(18.dp),
-                                    style = TextStyle(
-                                        fontSize = 22.sp, fontWeight = FontWeight.Bold
-                                    )
-                                )
-                                Recommend()
-
-
-                            }
+                        // ✅ Main home screen with popup + weather
+                        composable(
+                            route = "home?fromLogin={fromLogin}",
+                            arguments = listOf(
+                                navArgument("fromLogin") {
+                                    type = NavType.BoolType
+                                    defaultValue = false
+                                }
+                            )
+                        ) { backStackEntry ->
+                            val fromLogin =
+                                backStackEntry.arguments?.getBoolean("fromLogin") ?: false
+                            HomeScreen(navController, fromLogin = fromLogin)
                         }
+
                         composable("transactionHistory") {
                             TransactionHistoryScreen(navController)
                         }
-                        composable(
-                            route = "order_confirmation",
-                        ) {
-                            // Convert from Parcelable list if needed
-                            val orderItems = cartManager.items.map {
-                                cartItem(
-                                    name = it.name,
-                                    img = it.img,
-                                    price = it.price,
-                                    size = it.size,
-                                    quantity = it.quantity
-                                )
-                            }
 
+                        composable("order_confirmation") {
+                            // convert from cart manager if needed
                             OrderConfirmationScreen(navController = navController)
                         }
+                        composable("order_history") {
+                            OrderHistoryScreen(navController)
+                        }
+
+
                         composable("detail") { backStackEntry ->
                             val coffee = navController.previousBackStackEntry
                                 ?.savedStateHandle
-                                ?.get<Coffee>("coffee")  // ✅ get the Coffee object
+                                ?.get<Coffee>("coffee")
 
                             if (coffee != null) {
                                 DetailScreen(navController = navController, coffee = coffee)
                             }
                         }
+
                         composable("cart") {
                             CartPage(navController)
                         }
+
                         composable("notification") {
                             Notification(navController)
                         }
@@ -184,213 +171,28 @@ class MainActivity : ComponentActivity() {
                         composable("hot") {
                             HotScreen(navController)
                         }
+
                         composable("cold") {
                             ColdScreen(navController)
                         }
+
                         composable("frappe") {
                             FrappeScreen(navController)
                         }
+
                         composable("cake") {
                             CakeScreen(navController)
                         }
+
                         composable("card") {
-                            var showDialog by remember { mutableStateOf(false) }
-                            var cards by remember { mutableStateOf(listOf<Map<String, String>>()) }
-
-                            // For remove confirmation
-                            var showRemoveDialog by remember { mutableStateOf(false) }
-                            var cardToRemoveIndex by remember { mutableStateOf(-1) }
-
-                            Box(modifier = Modifier.fillMaxSize()) {
-                                Column(modifier = Modifier.padding(15.dp)) {
-
-                                    // --- Header ---
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        Text(
-                                            text = "My Card",
-                                            fontSize = 22.sp,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                        Button(
-                                            onClick = { showDialog = true },
-                                            modifier = Modifier.size(35.dp),
-                                            contentPadding = PaddingValues(0.dp),
-                                            shape = RoundedCornerShape(50)
-                                        ) {
-                                            Icon(Icons.Default.Add, contentDescription = "Add")
-                                        }
-                                    }
-
-                                    Spacer(Modifier.height(20.dp))
-
-                                    // --- Card List / Empty State ---
-                                    if (cards.isEmpty()) {
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .height(300.dp)
-                                                .background(color = Color(0xFFD9D9D9)),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                                Icon(
-                                                    painter = painterResource(id = R.drawable.cardd),
-                                                    contentDescription = null,
-                                                    modifier = Modifier.size(80.dp)
-                                                )
-                                                Spacer(Modifier.height(10.dp))
-                                                Text(
-                                                    text = "Your card(s) will be shown here if you add more",
-                                                    textAlign = TextAlign.Center,
-                                                    fontSize = 16.sp
-                                                )
-                                            }
-                                        }
-                                    } else {
-                                        Column {
-                                            cards.forEachIndexed { index, card ->
-                                                Card(
-                                                    modifier = Modifier
-                                                        .fillMaxWidth()
-                                                        .padding(vertical = 6.dp),
-                                                    colors = CardDefaults.cardColors(
-                                                        containerColor = Color(
-                                                            0xFF4C64FF
-                                                        )
-                                                    )
-                                                ) {
-                                                    Row(
-                                                        modifier = Modifier
-                                                            .fillMaxWidth()
-                                                            .padding(16.dp),
-                                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                                        verticalAlignment = Alignment.CenterVertically
-                                                    ) {
-                                                        Column {
-                                                            Text(
-                                                                "Card Number: ${card["number"]}",
-                                                                color = Color.White
-                                                            )
-                                                            Text(
-                                                                "Holder: ${card["holder"]}",
-                                                                color = Color.White
-                                                            )
-                                                            Text(
-                                                                "Expiry: ${card["expiry"]}",
-                                                                color = Color.White
-                                                            )
-                                                        }
-                                                        IconButton(onClick = {
-                                                            cardToRemoveIndex = index
-                                                            showRemoveDialog = true
-                                                        }) {
-                                                            Icon(
-                                                                Icons.Default.Delete,
-                                                                contentDescription = "Remove Card",
-                                                                tint = Color.White
-                                                            )
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    Spacer(Modifier.height(30.dp))
-
-                                    // --- Add More Button ---
-                                    Button(
-                                        onClick = { showDialog = true },
-                                        modifier = Modifier
-                                            .align(Alignment.CenterHorizontally)
-                                            .width(180.dp)
-                                            .height(55.dp)
-                                    ) {
-                                        Text(
-                                            "Add More Card",
-                                            fontSize = 18.sp,
-                                            fontWeight = FontWeight.SemiBold
-                                        )
-                                    }
-                                }
-
-                                // --- Add Card Dialog ---
-                                if (showDialog) {
-                                    var number by remember { mutableStateOf("") }
-                                    var holder by remember { mutableStateOf("") }
-                                    var expiry by remember { mutableStateOf("") }
-
-                                    AlertDialog(
-                                        onDismissRequest = { showDialog = false },
-                                        title = { Text("Add New Card") },
-                                        text = {
-                                            Column {
-                                                OutlinedTextField(
-                                                    value = number,
-                                                    onValueChange = { number = it },
-                                                    label = { Text("Card Number") })
-                                                OutlinedTextField(
-                                                    value = holder,
-                                                    onValueChange = { holder = it },
-                                                    label = { Text("Card Holder Name") })
-                                                OutlinedTextField(
-                                                    value = expiry,
-                                                    onValueChange = { expiry = it },
-                                                    label = { Text("Expiry Date") })
-                                            }
-                                        },
-                                        confirmButton = {
-                                            Button(onClick = {
-                                                if (number.isNotBlank() && holder.isNotBlank() && expiry.isNotBlank()) {
-                                                    cards = cards + mapOf(
-                                                        "number" to number,
-                                                        "holder" to holder,
-                                                        "expiry" to expiry
-                                                    )
-                                                    showDialog = false
-                                                }
-                                            }) {
-                                                Text("Add")
-                                            }
-                                        },
-                                        dismissButton = {
-                                            TextButton(onClick = { showDialog = false }) {
-                                                Text("Cancel")
-                                            }
-                                        })
-                                }
-
-                                // --- Remove Card Confirmation Dialog ---
-                                if (showRemoveDialog && cardToRemoveIndex >= 0) {
-                                    AlertDialog(
-                                        onDismissRequest = { showRemoveDialog = false },
-                                        title = { Text("Remove Card") },
-                                        text = { Text("Are you sure you want to remove this card?") },
-                                        confirmButton = {
-                                            Button(onClick = {
-                                                cards =
-                                                    cards.filterIndexed { index, _ -> index != cardToRemoveIndex }
-                                                showRemoveDialog = false
-                                            }) {
-                                                Text("Yes")
-                                            }
-                                        },
-                                        dismissButton = {
-                                            TextButton(onClick = { showRemoveDialog = false }) {
-                                                Text("No")
-                                            }
-                                        })
-                                }
-                            }
+                            CardScreen(navController)
                         }
 
                         composable("scan") {
                             val context = LocalContext.current
                             val scanLauncher = rememberLauncherForActivityResult(
-                                contract = ScanContract(), onResult = { result: ScanIntentResult ->
+                                contract = ScanContract(),
+                                onResult = { result: ScanIntentResult ->
                                     if (result.contents == null) {
                                         Toast.makeText(context, "Cancelled", Toast.LENGTH_SHORT)
                                             .show()
@@ -416,7 +218,7 @@ class MainActivity : ComponentActivity() {
 
                                 Button(onClick = {
                                     scanLauncher.launch(ScanOptions().apply {
-                                        setDesiredBarcodeFormats(ScanOptions.QR_CODE) // Only QR
+                                        setDesiredBarcodeFormats(ScanOptions.QR_CODE)
                                         setPrompt("Scan a QR Code")
                                         setBeepEnabled(true)
                                         setOrientationLocked(true)
@@ -425,10 +227,13 @@ class MainActivity : ComponentActivity() {
                                     Text("Scan QR")
                                 }
                             }
-
                         }
+
                         composable("topup") {
                             TopUp(navController)
+                        }
+                        composable("topup_qr") {
+                            TopUpQrScreen(navController)
                         }
                         composable("setting") {
                             SettingPage(navController)
@@ -439,12 +244,377 @@ class MainActivity : ComponentActivity() {
                         composable("navbar") {
                             NaviBar(navController)
                         }
-
                     }
                 }
             }
         }
     }
+    @OptIn(ExperimentalAnimationApi::class)
+    @Composable
+    fun WeatherRecommendationBubble(
+        tempC: Double,
+        isNight: Boolean,
+        onGoHot: () -> Unit,
+        onGoCold: () -> Unit,
+        onGoFrappe: () -> Unit,
+        onGoCake: () -> Unit
+    ) {
+        var visible by remember { mutableStateOf(true) }
+        if (!visible) return
+
+        val (message, suggestion) = getCoolWeatherAdvice(tempC, isNight)
+
+        AnimatedVisibility(
+            visible = visible,
+            enter = fadeIn() + scaleIn(),
+            exit = fadeOut() + scaleOut()
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 6.dp)
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(22.dp),
+                    tonalElevation = 8.dp,
+                    shadowElevation = 12.dp,
+                    color = Color(0xFF3B2A1F),
+                    modifier = Modifier.clickable {
+                        when (suggestion) {
+                            "hot" -> onGoHot()
+                            "cold" -> onGoCold()
+                            "frappe" -> onGoFrappe()
+                            "cake" -> onGoCake()
+                        }
+                    }
+                ) {
+                    Row(
+                        modifier = Modifier.padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(12.dp)
+                                .clip(RoundedCornerShape(50))
+                                .background(Color(0xFFFFC107))
+                        )
+
+                        Spacer(Modifier.width(10.dp))
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "AI Weather Pick",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color(0xFFFFD180)
+                            )
+                            Spacer(Modifier.height(2.dp))
+                            Text(
+                                text = message,
+                                fontSize = 13.sp,
+                                color = Color.White,
+                                lineHeight = 18.sp
+                            )
+                        }
+
+                        IconButton(
+                            onClick = { visible = false },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(
+                                    android.R.drawable.ic_menu_close_clear_cancel
+                                ),
+                                contentDescription = "Dismiss",
+                                tint = Color(0xFFFFD180),
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
+    // ---------------- HOME SCREEN WITH WEATHER + POPUP ----------------
+
+    @OptIn(ExperimentalAnimationApi::class)
+    @Composable
+    fun HomeScreen(navController: NavHostController, fromLogin: Boolean) {
+        val context = LocalContext.current
+        var drink by remember { mutableStateOf<DrinkResponse?>(null) }
+        var showPopup by remember { mutableStateOf(false) }
+        var loading by remember { mutableStateOf(false) }
+
+        // ❗ Get SavedStateHandle for Home Route
+        // this remembers the popup state even if user leaves and comes back
+        val savedStateHandle = navController.currentBackStackEntry?.savedStateHandle
+        val hasShownPopup = savedStateHandle?.get<Boolean>("hasShownPopup") ?: false
+
+        // weather state
+        var currentTemp by remember { mutableStateOf<Double?>(null) }
+        var weatherError by remember { mutableStateOf<String?>(null) }
+
+        // determine day/night
+        val isNight = remember {
+            val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+            hour < 6 || hour >= 18
+        }
+
+        // ################### WEATHER FETCH ###################
+        LaunchedEffect(Unit) {
+            weatherError = null
+            currentTemp = null
+
+            try {
+                val weather = WeatherApi.service.getWeather(
+                    latitude = 11.5564,
+                    longitude = 104.9282
+                )
+                currentTemp = weather.currentWeather.temperature
+            } catch (e: Exception) {
+                weatherError = e.localizedMessage ?: "Unknown error"
+            }
+        }
+
+        // ################### POPUP (FIRST TIME ONLY) ###################
+        LaunchedEffect(Unit) {
+            if (!hasShownPopup) {
+                loading = true
+                try {
+                    val result = DrinkApi.service.getRandomDrink()
+                    drink = result
+                } catch (e: Exception) {
+                    // fallback offline drink
+                    drink = DrinkResponse(
+                        name = "House Latte",
+                        description = "Our special latte, perfect to welcome you back.",
+                        image = null,
+                        imageUrl = null,
+                        img = null,
+                        price = 3.50
+                    )
+
+                    Toast.makeText(
+                        context,
+                        "Showing sample drink (offline).",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                } finally {
+                    showPopup = drink != null
+                    loading = false
+
+                    // ❗ Save popup has been shown
+                    savedStateHandle?.set("hasShownPopup", true)
+                }
+            }
+        }
+
+        // ################### UI ###################
+        Box(Modifier.fillMaxSize()) {
+            val bgBlur = if (showPopup) 12.dp else 0.dp
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .blur(bgBlur)
+            ) {
+                Head(navController)
+                showBalance()
+                Spacer(Modifier.height(12.dp))
+                Body()
+
+                Spacer(Modifier.height(20.dp))
+                InputField()
+                Spacer(Modifier.height(10.dp))
+
+                Text(
+                    "Menu",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 23.sp,
+                    modifier = Modifier.padding(15.dp)
+                )
+
+                // Weather bubble
+                when {
+                    currentTemp != null -> {
+                        WeatherRecommendationBubble(
+                            tempC = currentTemp!!,
+                            isNight = isNight,
+                            onGoHot = { navController.navigate("hot") },
+                            onGoCold = { navController.navigate("cold") },
+                            onGoFrappe = { navController.navigate("frappe") },
+                            onGoCake = { navController.navigate("cake") }
+                        )
+                    }
+                    weatherError != null -> {
+                        Text(
+                            text = "Weather error: $weatherError",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                            fontSize = 12.sp,
+                            color = Color.Gray,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(8.dp))
+
+                Cat(navController)
+
+                Text(
+                    text = "Signature Food & Drink",
+                    modifier = Modifier.padding(18.dp),
+                    style = TextStyle(fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                )
+                Recommend(navController)
+            }
+
+            if (showPopup) {
+                Box(
+                    Modifier
+                        .matchParentSize()
+                        .background(Color.Black.copy(alpha = 0.35f))
+                )
+            }
+
+            AnimatedVisibility(
+                visible = showPopup && drink != null,
+                enter = fadeIn() + scaleIn(),
+                exit = fadeOut() + scaleOut()
+            ) {
+                DrinkPopup(
+                    drink = drink!!,
+                    onDismiss = { showPopup = false }
+                )
+            }
+
+            if (loading) {
+                LinearProgressIndicator(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.TopCenter)
+                )
+            }
+        }
+    }
+
+
+
+    @Composable
+    fun DrinkPopup(drink: DrinkResponse, onDismiss: () -> Unit) {
+        val imageModel: Any = if (drink.photo.isNullOrBlank()) {
+            R.drawable.cardd
+        } else {
+            drink.photo!!
+        }
+
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Card(
+                shape = RoundedCornerShape(32.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                modifier = Modifier
+                    .fillMaxWidth(0.85f)
+                    .wrapContentHeight()
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    AsyncImage(
+                        model = imageModel,
+                        contentDescription = drink.name,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(220.dp)
+                            .clip(RoundedCornerShape(24.dp)),
+                        contentScale = ContentScale.Crop,
+                        placeholder = painterResource(R.drawable.cardd),
+                        error = painterResource(R.drawable.cardd)
+                    )
+
+                    Spacer(Modifier.height(16.dp))
+
+                    Text(
+                        text = drink.name,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 22.sp,
+                        color = Color(0xFF6A4E39),
+                        textAlign = TextAlign.Center
+                    )
+
+                    if (drink.description.isNotBlank()) {
+                        Spacer(Modifier.height(6.dp))
+                        Text(
+                            text = drink.description,
+                            color = Color.Gray,
+                            fontSize = 16.sp,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+
+                    Spacer(Modifier.height(10.dp))
+
+                    Text(
+                        text = "Price: $${"%.2f".format(drink.price)}",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color(0xFF6A4E39)
+                    )
+
+                    Spacer(Modifier.height(18.dp))
+
+                    Button(
+                        onClick = onDismiss,
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6A4E39))
+                    ) {
+                        Text("Close", color = Color.White)
+                    }
+                }
+            }
+        }
+    }
+
+    // tempC in °C, isNight from Calendar
+
+
+    // suggestion: "hot" / "cold" / "frappe" / "cake" / null
+    fun getCoolWeatherAdvice(tempC: Double, isNight: Boolean): Pair<String, String?> {
+        return if (!isNight) {
+            when {
+                tempC < 25.0 -> {
+                    "It's ${"%.1f".format(tempC)}°C 🌤 Nice daytime weather — a warm coffee would be great." to "hot"
+                }
+                tempC > 31.0 -> {
+                    "It's ${"%.1f".format(tempC)}°C ☀️ Quite hot outside — maybe a cold drink or frappe?" to "cold"
+                }
+                else -> {
+                    "It's ${"%.1f".format(tempC)}°C ☁️ A smooth frappe or cake sounds perfect." to "frappe"
+                }
+            }
+        } else {
+            when {
+                tempC < 25.0 -> {
+                    "It's ${"%.1f".format(tempC)}°C 🌙 Cool night — a warm drink is comforting." to "hot"
+                }
+                tempC > 31.0 -> {
+                    "It's ${"%.1f".format(tempC)}°C 🌙 Still warm tonight — maybe a cold drink?" to "cold"
+                }
+                else -> {
+                    "It's ${"%.1f".format(tempC)}°C 🌙 Perfect night — maybe enjoy some cake." to "cake"
+                }
+            }
+        }
+    }
+
+
+    // ---------------- EXISTING COMPONENTS ----------------
 
     @Composable
     fun showBalance() {
@@ -454,36 +624,41 @@ class MainActivity : ComponentActivity() {
             balanceState.value = RealmBlockchainRepository.getBalance()
         }
 
-        val bal = balanceState.value   // <-- unwrap the state
+        val bal = balanceState.value
 
-        Card (
+        Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(90.dp)
                 .padding(horizontal = 16.dp),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF6A4E39))
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF5C3321))
         ) {
             Row(
-                Modifier.fillMaxSize().padding(16.dp),
+                Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column {
                     Text(
                         text = "Wallet Balance",
-                        color = Color(0xFFEED9C4), // latte cream
-                        fontSize = 14.sp
+                        color = Color(0xFFEED9C4),
+                        fontSize = 15.sp
                     )
                     Text(
-                        text = "$${"%.2f".format(bal)}",   // <-- use bal, not balanceState
-                        style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.White)
+                        text = "$${"%.2f".format(bal)}",
+                        style = TextStyle(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            color = Color.White
+                        )
                     )
 
                 }
                 Icon(
-                    painter = painterResource(id = R.drawable.wallet), // replace with your icon
-//                    imageVector = Icons.Default.AccountBalanceWallet,
+                    painter = painterResource(id = R.drawable.wallet),
                     contentDescription = null,
                     tint = Color(0xFFEED9C4),
                     modifier = Modifier.size(36.dp)
@@ -492,27 +667,24 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-
     @Composable
     fun Body() {
         Text(
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center,
             text = "What would you like today?",
-
             style = TextStyle(
-                fontSize = 22.sp, fontWeight = FontWeight.Bold
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold
             )
         )
     }
-
-
 
     @Preview(showBackground = true)
     @Composable
     fun GreetingPreview() {
         CoffeeAppTheme {
-//        Head()
+            // Preview content
         }
     }
 }

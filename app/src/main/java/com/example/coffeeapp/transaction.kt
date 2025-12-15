@@ -17,6 +17,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
@@ -46,7 +47,7 @@ fun TransactionHistoryScreen(navController: NavHostController) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Transaction History (Blockchain)") },
+                title = { Text("Transaction History") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Default.ArrowBackIosNew, contentDescription = "Back")
@@ -137,55 +138,104 @@ private fun BlockCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            // Long-press anywhere on the card to copy hash
             .combinedClickable(
                 onClick = {},
                 onLongClick = onCopyHash
             ),
-        shape = MaterialTheme.shapes.medium
+        shape = MaterialTheme.shapes.large
     ) {
-        Column(Modifier.fillMaxWidth().padding(12.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+
+            /* ---------- HEADER ---------- */
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    "Block #${block.index} • ${block.hash.take(10)}…",
+                    text = "Block #${block.index}",
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.weight(1f)
                 )
-                if (brokenLink) {
-                    AssistChip(
-                        onClick = {},
-                        label = { Text("Link broken") },
-                        colors = AssistChipDefaults.assistChipColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer,
-                            labelColor = MaterialTheme.colorScheme.onErrorContainer
+
+                AssistChip(
+                    onClick = {},
+                    label = {
+                        Text(
+                            if (brokenLink) "Invalid" else "Valid"
                         )
+                    },
+                    colors = AssistChipDefaults.assistChipColors(
+                        containerColor = if (brokenLink)
+                            MaterialTheme.colorScheme.errorContainer
+                        else
+                            MaterialTheme.colorScheme.secondaryContainer
                     )
-                } else {
-                    AssistChip(onClick = {}, label = { Text("OK") })
-                }
+                )
             }
 
-            Text("Prev: ${block.previousHash.take(10)}…", style = MaterialTheme.typography.bodySmall)
-            Spacer(Modifier.height(6.dp))
+            Text(
+                text = "Hash: ${block.hash.take(12)}…",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
 
+            if (block.index != 0) {
+                Text(
+                    text = "Prev: ${block.previousHash.take(12)}…",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Divider(Modifier.padding(vertical = 6.dp))
+
+            /* ---------- CONTENT ---------- */
             if (order != null) {
-                Text("Order #${order.id} • ${fmt.format(Date(order.timestamp))}")
+                Text(
+                    text = "Order #${order.id}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                Text(
+                    text = fmt.format(Date(order.timestamp)),
+                    style = MaterialTheme.typography.bodySmall
+                )
+
                 if (order.itemsSummary.isNotBlank()) {
-                    Text(order.itemsSummary, style = MaterialTheme.typography.bodySmall)
+                    Text(
+                        text = order.itemsSummary,
+                        style = MaterialTheme.typography.bodySmall
+                    )
                 }
-                Text("Total: $${"%.2f".format(order.total)}", style = MaterialTheme.typography.bodyMedium)
+
+                Text(
+                    text = "Total: $${"%.2f".format(order.total)}",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
             } else {
-                Text("Genesis block")
+                Text(
+                    text = "Genesis Block",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
             }
 
-            Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
-                FilledTonalButton(onClick = onCopyHash) {
-                    Icon(Icons.Default.ContentCopy, contentDescription = "Copy hash")
-                    Spacer(Modifier.width(8.dp))
-                    Text("Copy hash")
+            /* ---------- ACTION ---------- */
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(onClick = onCopyHash) {
+                    Icon(Icons.Default.ContentCopy, contentDescription = null)
+                    Spacer(Modifier.width(6.dp))
+                    Text("Copy Hash")
                 }
             }
         }
     }
 }
+
