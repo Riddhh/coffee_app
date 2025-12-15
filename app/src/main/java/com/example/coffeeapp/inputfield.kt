@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -19,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -42,7 +44,9 @@ fun InputField() {
         Button(
             onClick = {}, modifier = Modifier
                 .height(55.dp)
-                .padding(end = 10.dp), shape = RoundedCornerShape(15.dp)
+                .padding(end = 10.dp), shape = RoundedCornerShape(15.dp), colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF5C3321)
+            )
         ) {
             Icon(Icons.Filled.Search, contentDescription = null)
 

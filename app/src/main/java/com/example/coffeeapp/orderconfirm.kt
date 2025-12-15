@@ -22,6 +22,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.text.NumberFormat
 import java.util.UUID
+import com.example.coffeeapp.auth.TokenStore
+import com.example.coffeeapp.order.CreateOrderRequest
+import com.example.coffeeapp.order.OrderHttp
+import com.example.coffeeapp.order.OrderItemDto
+
 
 @Composable
 fun OrderConfirmationScreen(
@@ -179,12 +184,49 @@ fun OrderConfirmationScreen(
 
                             when (result) {
                                 is RealmBlockchainRepository.PurchaseResult.Success -> {
+                                    // 🔹 STEP A: Get JWT token
+                                    val ctx = navController.context
+                                    val token = TokenStore.get(ctx)
+
+                                    if (token.isNullOrBlank()) {
+                                        isProcessing = false
+                                        snackbarHostState.showSnackbar("Missing token. Please login again.")
+                                        return@launch
+                                    }
+
+                                    // 🔹 STEP B: Send order to Order microservice (3002)
+                                    val req = CreateOrderRequest(
+                                        items = orderItems.map {
+                                            OrderItemDto(
+                                                name = it.name,
+                                                price = it.price,
+                                                quantity = it.quantity,
+                                                imageUrl = it.img
+                                            )
+                                        },
+                                        total = total
+                                    )
+
+                                    runCatching {
+                                        OrderHttp.api.createOrder(
+                                            authorization = "Bearer $token",
+                                            req = req
+                                        )
+                                    }.onFailure { e ->
+                                        snackbarHostState.showSnackbar(
+                                            "Server order failed: ${e.message}"
+                                        )
+                                    }
+
+                                    // 🔹 STEP C: Keep your existing logic
                                     isProcessing = false
-                                    cartManager.clearCart() // ✅ clear cart on success
+                                    cartManager.clearCart()
+
                                     val paidAmount = total
                                     snackbarHostState.showSnackbar(
                                         "Payment successful • ${currency.format(paidAmount)} deducted"
                                     )
+
                                     navController.navigate("home") {
                                         launchSingleTop = true
                                     }
@@ -212,7 +254,7 @@ fun OrderConfirmationScreen(
                                                     val paidAmount = total
                                                     cartManager.clearCart() // ✅ also clear after retry success
                                                     snackbarHostState.showSnackbar(
-                                                        "Payment successful • ${currency.format(paidAmount)} deducted"
+                                                        "Payment successful"
                                                     )
                                                     navController.navigate("home") {
                                                         launchSingleTop = true

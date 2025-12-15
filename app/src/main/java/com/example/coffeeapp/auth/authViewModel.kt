@@ -1,8 +1,9 @@
 package com.example.coffeeapp.auth
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.coffeeapp.network.ApiClient
+import com.example.coffeeapp.micro.NetworkClient
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -13,7 +14,8 @@ data class AuthState(
     val error: String? = null
 )
 
-class AuthViewModel : ViewModel() {
+class AuthViewModel(application: Application) : AndroidViewModel(application) {
+
     private val _state = MutableStateFlow(AuthState())
     val state: StateFlow<AuthState> = _state
 
@@ -21,13 +23,16 @@ class AuthViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 _state.value = AuthState(loading = true)
-                val res = ApiClient.login(email, password)
-                if (res.token != null) {
-                    // you can save res.token in DataStore later
-                    _state.value = AuthState(isAuthed = true)
-                } else {
-                    _state.value = AuthState(error = res.message ?: "Login failed")
-                }
+
+                val res = NetworkClient.authApi.login(
+                    LoginReq(email, password)
+                )
+
+                // ✅ SAVE JWT HERE
+                TokenStore.save(getApplication(), res.token)
+
+                _state.value = AuthState(isAuthed = true)
+
             } catch (e: Exception) {
                 _state.value = AuthState(error = e.message)
             }
@@ -38,12 +43,13 @@ class AuthViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 _state.value = AuthState(loading = true)
-                val res = ApiClient.register(email, password)
-                if (res.token != null) {
-                    _state.value = AuthState(isAuthed = true)
-                } else {
-                    _state.value = AuthState(error = res.message ?: "Registration failed")
-                }
+
+                NetworkClient.authApi.register(
+                    RegisterReq(email, password)
+                )
+
+                _state.value = AuthState(isAuthed = true)
+
             } catch (e: Exception) {
                 _state.value = AuthState(error = e.message)
             }
