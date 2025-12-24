@@ -16,16 +16,23 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -45,6 +52,7 @@ import com.example.coffeeapp.CardViewModel
 import com.example.coffeeapp.R
 import kotlin.collections.plus
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CardScreen(navController: NavHostController) {
     val vm: CardViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
@@ -54,56 +62,100 @@ fun CardScreen(navController: NavHostController) {
     var showRemove by remember { mutableStateOf(false) }
     var removeId by remember { mutableStateOf<String?>(null) }
 
+    val bg = Color(0xFFF5ECE4)
+    val textt = Color(0xFF5A3A26)
+    val textt1 = Color(0xFFA68C7E)
+    val btn = Color(0xFF5C3321)
     // UI same idea as you already have
-    Column(Modifier.fillMaxSize().padding(15.dp)) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("Payment Methods", fontSize = 22.sp, fontWeight = FontWeight.Bold)
-            IconButton(onClick = { showAdd = true }) {
-                Icon(Icons.Default.Add, contentDescription = "Add")
-            }
+    Scaffold(
+        containerColor = bg,
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = {
+                    Text("Payment Methods", fontWeight = FontWeight.Bold)
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = bg,              // ✅ top bar background
+                    titleContentColor = textt     // ✅ title color
+            )
+            )
         }
+    ) {padding ->
+        Column(
+            Modifier
+                .fillMaxSize()
+                .padding(30.dp)
+        ) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("Payment Methods", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = textt)
+                IconButton(onClick = { showAdd = true }) {
+                    Icon(Icons.Default.Add, contentDescription = "Add")
+                }
+            }
 
-        Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(12.dp))
 
-        if (cards.isEmpty()) {
-            // keep your empty state
-            Text("No saved cards yet. Add one for demo mode.")
-        } else {
-            cards.forEach { c ->
-                Card(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFF5C3321)),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Row(
-                        Modifier.fillMaxWidth().padding(14.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+            if (cards.isEmpty()) {
+                // keep your empty state
+                Text("No saved cards yet. Add one for demo mode.", color = textt1)
+            } else {
+                cards.forEach { c ->
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 6.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFF5C3321)),
+                        shape = RoundedCornerShape(16.dp)
                     ) {
-                        Column(Modifier.weight(1f)) {
-                            Text("${c.brand}  •••• ${c.last4}", color = Color.White, fontWeight = FontWeight.SemiBold)
-                            Text("${c.holder} • Exp ${c.expMonth.toString().padStart(2,'0')}/${(c.expYear % 100).toString().padStart(2,'0')}",
-                                color = Color.White.copy(alpha = 0.85f),
-                                fontSize = 13.sp
-                            )
-                        }
-                        IconButton(onClick = {
-                            removeId = c.id
-                            showRemove = true
-                        }) {
-                            Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.White)
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(14.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    "${c.brand}  •••• ${c.last4}",
+                                    color = Color.White,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    "${c.holder} • Exp ${
+                                        c.expMonth.toString().padStart(2, '0')
+                                    }/${(c.expYear % 100).toString().padStart(2, '0')}",
+                                    color = Color.White.copy(alpha = 0.85f),
+                                    fontSize = 13.sp
+                                )
+                            }
+                            IconButton(onClick = {
+                                removeId = c.id
+                                showRemove = true
+                            }) {
+                                Icon(
+                                    Icons.Default.Delete,
+                                    contentDescription = "Delete",
+                                    tint = Color.White
+                                )
+                            }
                         }
                     }
                 }
             }
-        }
 
-        Spacer(Modifier.height(16.dp))
-        Button(
-            onClick = { showAdd = true },
-            modifier = Modifier.align(Alignment.CenterHorizontally).width(200.dp).height(52.dp),
-            shape = RoundedCornerShape(14.dp)
-        ) { Text("Add new card") }
+            Spacer(Modifier.height(16.dp))
+            Button(
+                onClick = { showAdd = true },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = btn ,          // ✅ button background
+                ),
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .width(200.dp)
+                    .height(52.dp),
+                shape = RoundedCornerShape(14.dp)
+            ) { Text("Add new card", fontSize = 18.sp) }
+        }
     }
 
     if (showAdd) {

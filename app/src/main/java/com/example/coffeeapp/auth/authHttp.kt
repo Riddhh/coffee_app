@@ -1,7 +1,8 @@
 package com.example.coffeeapp.auth
 
-
 import android.content.Context
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
@@ -12,10 +13,14 @@ object Http {
             .addInterceptor(AuthInterceptor(ctx))
             .build()
 
+        val moshi = Moshi.Builder()
+            .add(KotlinJsonAdapterFactory())
+            .build()
+
         return Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:3001/") // Emulator→your laptop localhost. On device, use your LAN IP.
+            .baseUrl("http://10.0.2.2:3001/")
             .client(client)
-            .addConverterFactory(MoshiConverterFactory.create())
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
             .build()
             .create(AuthApi::class.java)
     }

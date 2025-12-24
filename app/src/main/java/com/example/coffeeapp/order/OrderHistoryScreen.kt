@@ -16,12 +16,17 @@ import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.example.coffeeapp.auth.TokenStore
 import com.example.coffeeapp.util.DateUtils
-import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OrderHistoryScreen(navController: NavHostController) {
     val ctx = navController.context
-    val scope = rememberCoroutineScope()
+
+    // 🎨 color palette (ONLY colors)
+    val bg = Color(0xFFF5ECE4)
+    val coffeeBrown = Color(0xFF381D12)
+    val softBrown = Color(0xFFA68C7E)
+    val cardBg = Color(0xFFEBE0DA)
 
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -37,7 +42,7 @@ fun OrderHistoryScreen(navController: NavHostController) {
 
         runCatching {
             val api = com.example.coffeeapp.micro.NetworkClient.orderApi {
-                TokenStore.get(ctx)   // returns RAW token only
+                TokenStore.get(ctx)
             }
             api.getOrders()
         }.onSuccess {
@@ -48,59 +53,111 @@ fun OrderHistoryScreen(navController: NavHostController) {
         loading = false
     }
 
-    Column(Modifier.fillMaxSize().padding(12.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = { navController.popBackStack() }) {
-                Icon(Icons.Default.ArrowBackIosNew, contentDescription = null)
-            }
-            Text("Order History", fontSize = 22.sp)
+    Scaffold(
+        containerColor = bg, // 🎨 background
+        topBar = {
+            TopAppBar(
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(
+                            Icons.Default.ArrowBackIosNew,
+                            contentDescription = "Back",
+                            tint = coffeeBrown
+                        )
+                    }
+                },
+                title = {
+                    Text(
+                        "Order History",
+                        fontSize = 22.sp,
+                        color = coffeeBrown
+                    )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = bg
+                )
+            )
         }
+    ) { paddingValues ->
 
-        when {
-            loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-            error != null -> Text("Error: $error", color = MaterialTheme.colorScheme.error)
-            orders.isEmpty() -> Text("No orders yet.")
-            else -> LazyColumn {
-                items(orders, key = { it._id ?: "" }) { order ->
-                    Card(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
-                        Column(Modifier.padding(12.dp)) {
-                            Text("Total: $${String.format("%.2f", order.total ?: 0.0)}")
+        Column(
+            Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(12.dp)
+        ) {
 
-                            Spacer(Modifier.height(4.dp))
+            when {
+                loading -> Box(
+                    Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = coffeeBrown)
+                }
 
-                            Text(
-                                text = "Date: ${DateUtils.format(order.date)}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color.Gray
+                error != null -> Text(
+                    "Error: $error",
+                    color = MaterialTheme.colorScheme.error
+                )
+
+                orders.isEmpty() -> Text(
+                    "No orders yet.",
+                    color = softBrown
+                )
+
+                else -> LazyColumn {
+                    items(orders, key = { it._id ?: "" }) { order ->
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 6.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = cardBg
                             )
+                        ) {
+                            Column(Modifier.padding(12.dp)) {
 
-                            Text(
-                                text = "Status: ${order.status ?: "PAID"}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = when (order.status) {
-                                    "PAID" -> Color(0xFF2E7D32)
-                                    "PREPARING" -> Color(0xFFF9A825)
-                                    "COMPLETED" -> Color(0xFF1565C0)
-                                    else -> Color.Gray
+                                Text(
+                                    "Total: $${String.format("%.2f", order.total ?: 0.0)}",
+                                    color = coffeeBrown
+                                )
+
+                                Spacer(Modifier.height(4.dp))
+
+                                Text(
+                                    text = "Date: ${DateUtils.format(order.date)}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = softBrown
+                                )
+
+                                Text(
+                                    text = "Status: ${order.status ?: "PAID"}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = when (order.status) {
+                                        "PAID" -> Color(0xFF2E7D32)
+                                        "PREPARING" -> Color(0xFFF9A825)
+                                        "COMPLETED" -> Color(0xFF1565C0)
+                                        else -> Color.Gray
+                                    }
+                                )
+
+                                Spacer(Modifier.height(8.dp))
+
+                                order.items.forEach { itx ->
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        AsyncImage(
+                                            model = itx.imageUrl,
+                                            contentDescription = itx.name,
+                                            modifier = Modifier.size(44.dp)
+                                        )
+                                        Spacer(Modifier.width(10.dp))
+                                        Text(
+                                            "${itx.name} x${itx.quantity ?: 1}",
+                                            color = coffeeBrown
+                                        )
+                                    }
+                                    Spacer(Modifier.height(6.dp))
                                 }
-                            )
-
-                            Spacer(Modifier.height(8.dp))
-
-
-                            order.items.forEach { itx ->
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    AsyncImage(
-                                        model = itx.imageUrl,
-                                        contentDescription = itx.name,
-                                        modifier = Modifier.size(44.dp)
-                                    )
-                                    Spacer(Modifier.width(10.dp))
-                                    Text("${itx.name} x${itx.quantity ?: 1}")
-                                }
-                                Spacer(Modifier.height(6.dp))
                             }
                         }
                     }

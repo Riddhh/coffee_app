@@ -29,9 +29,13 @@ fun Register(navController: NavHostController) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
+    val textBrown = Color(0xFF381D12)
+    val btn = Color(0xFF5C3321)
+    val txtbtn = Color(0xFF5C3321)
+
     Column(
         modifier = Modifier
-            .padding(20.dp)
+            .padding(start = 20.dp, end = 20.dp, bottom = 20.dp)
             .fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -45,43 +49,68 @@ fun Register(navController: NavHostController) {
             fontSize = 26.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(bottom = 20.dp),
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            color = textBrown
         )
 
         OutlinedTextField(
             value = name,
             onValueChange = { name = it },
             label = { Text("Name") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = Color(0xFF5A3A26),
+                unfocusedBorderColor = Color(0xFFBCA89B),
+                cursorColor = Color(0xFF5A3A26),
+                focusedLabelColor = Color(0xFF5A3A26)
+            ),
+            shape = RoundedCornerShape(16.dp),
         )
 
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(15.dp))
 
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
             label = { Text("Email") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = Color(0xFF5A3A26),
+                unfocusedBorderColor = Color(0xFFBCA89B),
+                cursorColor = Color(0xFF5A3A26),
+                focusedLabelColor = Color(0xFF5A3A26)
+            ),
+            shape = RoundedCornerShape(16.dp),
         )
 
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(15.dp))
 
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
             label = { Text("Password") },
             visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = Color(0xFF5A3A26),
+                unfocusedBorderColor = Color(0xFFBCA89B),
+                cursorColor = Color(0xFF5A3A26),
+                focusedLabelColor = Color(0xFF5A3A26)
+            ),
+            shape = RoundedCornerShape(16.dp),
         )
 
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(25.dp))
 
         Button(
+            colors = ButtonDefaults.buttonColors(
+                containerColor = btn ,          // ✅ button background
+            ),
             onClick = {
                 if (email.isBlank() || password.isBlank()) {
                     Toast.makeText(context, "Please fill in all fields", Toast.LENGTH_SHORT).show()
                 } else {
-                    vm.register(email, password)
+                    vm.register(name = name, email = email, password)
                 }
             },
             modifier = Modifier
@@ -117,7 +146,7 @@ fun Register(navController: NavHostController) {
         Spacer(Modifier.height(10.dp))
 
         TextButton(onClick = { navController.navigate("login") }) {
-            Text("Already have an account? Login", color = MaterialTheme.colorScheme.primary)
+            Text("Already have an account? Login", color = txtbtn, fontSize = 17.sp)
         }
     }
 }

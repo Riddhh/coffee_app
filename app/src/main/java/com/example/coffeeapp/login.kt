@@ -16,10 +16,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
@@ -56,11 +58,14 @@ fun Login(navController: NavHostController) {
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     var pwdVisible by rememberSaveable { mutableStateOf(false) }
+    val btn = Color(0xFF5C3321)
+    val txtbtn = Color(0xFF5C3321)
+    val textBrown = Color(0xFF381D12)
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(20.dp),
+            .padding(start = 20.dp, end = 20.dp, bottom = 20.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Image(
@@ -72,7 +77,8 @@ fun Login(navController: NavHostController) {
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            color = textBrown
         )
 
         Spacer(Modifier.height(24.dp))
@@ -84,15 +90,27 @@ fun Login(navController: NavHostController) {
             label = { Text("Email") },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp)
+            shape = RoundedCornerShape(16.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = Color(0xFF5A3A26),
+                unfocusedBorderColor = Color(0xFFBCA89B),
+                cursorColor = Color(0xFF5A3A26),
+                focusedLabelColor = Color(0xFF5A3A26)
+            ),
         )
 
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(18.dp))
 
         // PASSWORD
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = Color(0xFF5A3A26),
+                unfocusedBorderColor = Color(0xFFBCA89B),
+                cursorColor = Color(0xFF5A3A26),
+                focusedLabelColor = Color(0xFF5A3A26)
+            ),
             label = { Text("Password") },
             singleLine = true,
             visualTransformation = if (pwdVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -100,17 +118,20 @@ fun Login(navController: NavHostController) {
                 val icon =
                     if (pwdVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
                 IconButton(onClick = { pwdVisible = !pwdVisible }) {
-                    Icon(icon, contentDescription = "Toggle password visibility")
+                    Icon(icon, contentDescription = "Toggle password visibility", tint = Color(0xFFa77b5b))
                 }
             },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp)
         )
 
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(25.dp))
 
         // LOGIN BUTTON
         Button(
+            colors = ButtonDefaults.buttonColors(
+                containerColor = btn ,          // ✅ button background
+            ),
             onClick = {
                 if (email.isBlank() || password.isBlank()) {
                     Toast.makeText(context, "Please enter all fields", Toast.LENGTH_SHORT).show()
@@ -143,9 +164,11 @@ fun Login(navController: NavHostController) {
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Don't have an account?")
-            TextButton(onClick = { navController.navigate("register") }) {
-                Text("Register")
+            Text("Don't have an account?",color = txtbtn, fontSize = 18.sp)
+            TextButton(
+
+                onClick = { navController.navigate("register") }) {
+                Text("Register", color = txtbtn, fontSize = 18.sp)
             }
         }
     }
@@ -153,7 +176,7 @@ fun Login(navController: NavHostController) {
     // Navigate when authenticated
     if (state.isAuthed) {
         LaunchedEffect(Unit) {
-            navController.navigate("home") {
+            navController.navigate("home?fromLogin=true") {
                 popUpTo("login") { inclusive = true }
             }
         }

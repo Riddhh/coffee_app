@@ -1,6 +1,8 @@
 package com.example.coffeeapp.micro
 
+import com.example.coffeeapp.Coffee
 import retrofit2.http.GET
+import retrofit2.http.Query
 
 data class Product(
     val _id: String? = null,
@@ -14,4 +16,7 @@ data class Product(
 interface ProductApi {
     @GET("products")
     suspend fun getProducts(): List<Product>
+
+    @GET("products/search")
+    suspend fun searchProducts(@Query("q") q: String): List<Coffee>
 }

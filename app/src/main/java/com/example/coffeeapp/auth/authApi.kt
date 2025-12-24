@@ -5,7 +5,7 @@ import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
 
-data class RegisterReq(val email: String, val password: String)
+data class RegisterReq(val name: String, val email: String, val password: String)
 data class LoginReq(val email: String, val password: String)
 data class TokenRes(val token: String)
 
@@ -17,5 +17,5 @@ interface AuthApi {
     suspend fun login(@Body b: LoginReq): TokenRes
 
     @GET("auth/me")
-    suspend fun me(@Header("Authorization") bearer: String): Map<String, Any>
+    suspend fun me(): UserProfile
 }

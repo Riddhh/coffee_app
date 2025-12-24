@@ -1,5 +1,7 @@
 package com.example.coffeeapp
-
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -19,6 +21,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -50,14 +53,31 @@ import com.journeyapps.barcodescanner.ScanOptions
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import com.example.coffeeapp.card.CardScreen
+import com.example.coffeeapp.micro.NetworkClient
+import com.example.coffeeapp.micro.ProductApi
 import com.example.coffeeapp.micro.TopUpQrScreen
 import com.example.coffeeapp.order.OrderHistoryScreen
+import com.example.coffeeapp.setting.PersonalInfoScreen
 import androidx.navigation.compose.rememberNavController as rememberNavController1
+import androidx.compose.material.icons.filled.ChatBubbleOutline
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.filled.ChatBubbleOutline
+
 
 class MainActivity : ComponentActivity() {
 
     @OptIn(ExperimentalMaterial3Api::class)
+
+    override fun attachBaseContext(newBase: android.content.Context) {
+        super.attachBaseContext(LocaleHelper.wrap(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -92,22 +112,65 @@ class MainActivity : ComponentActivity() {
                     if (authState.isAuthed && currentRoute == "login") {
                         navController.navigate("home?fromLogin=true") {
                             popUpTo("login") { inclusive = true }
+//                            launchSingleTop = true
+//                            restoreState = true
+//                            popUpTo(navController.graph.startDestinationId) { saveState = true }
                         }
                     }
                 }
-
+                val appBg = Color(0xFFF5ECE4)
+//                val appBg = Color(0xFFF4EAE1)
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
+                    containerColor = appBg,
                     bottomBar = {
                         if (currentRoute in bottomBarRoutes) {
                             NaviBar(navController)
+                        }
+                    },
+                            // ✅ UPDATED: Ask Me button ONLY on Home screen (does not affect other flows)
+                            floatingActionButton = {
+                        val currentRoute =
+                            navController.currentBackStackEntryAsState().value?.destination?.route
+
+                        // home route is "home?fromLogin=..."
+                        val isHome = currentRoute?.startsWith("home") == true
+
+                        if (isHome) {
+                            FloatingActionButton(
+                                onClick = { navController.navigate("chat") },
+                                containerColor = Color(0xFF6A4E39),
+                                contentColor = Color.White,
+                                shape = RoundedCornerShape(18.dp),
+                                elevation = FloatingActionButtonDefaults.elevation(
+                                    defaultElevation = 10.dp,
+                                    pressedElevation = 16.dp
+                                )
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 14.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        Icons.Filled.ChatBubbleOutline,
+                                        contentDescription = "Chat bot"
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(
+                                        text = "Ask Me",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 14.sp
+                                    )
+                                }
+                            }
                         }
                     }
                 ) { innerPadding ->
                     NavHost(
                         navController = navController,
-                        startDestination = "login",
-                        modifier = Modifier.padding(innerPadding)
+                        startDestination = "login", //login
+                        modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding())
+                            .background(appBg)
                     ) {
                         composable("login") {
                             Login(navController)
@@ -134,12 +197,17 @@ class MainActivity : ComponentActivity() {
                         ) { backStackEntry ->
                             val fromLogin =
                                 backStackEntry.arguments?.getBoolean("fromLogin") ?: false
-                            HomeScreen(navController, fromLogin = fromLogin)
+                            HomeScreen(
+                                navController,
+                                fromLogin = fromLogin,
+
+                            )
                         }
 
                         composable("transactionHistory") {
                             TransactionHistoryScreen(navController)
                         }
+                        composable("language") { LanguageScreen(navController) }
 
                         composable("order_confirmation") {
                             // convert from cart manager if needed
@@ -147,6 +215,9 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("order_history") {
                             OrderHistoryScreen(navController)
+                        }
+                        composable("personal_info") {
+                            PersonalInfoScreen(navController)
                         }
 
 
@@ -190,6 +261,7 @@ class MainActivity : ComponentActivity() {
 
                         composable("scan") {
                             val context = LocalContext.current
+                            val btn = Color(0xFF5C3321)
                             val scanLauncher = rememberLauncherForActivityResult(
                                 contract = ScanContract(),
                                 onResult = { result: ScanIntentResult ->
@@ -211,7 +283,7 @@ class MainActivity : ComponentActivity() {
                             ) {
                                 Text(
                                     "Tap below to scan a QR Code",
-                                    fontSize = 20.sp,
+                                    fontSize = 21.sp,
                                     fontWeight = FontWeight.Bold
                                 )
                                 Spacer(modifier = Modifier.height(20.dp))
@@ -223,8 +295,13 @@ class MainActivity : ComponentActivity() {
                                         setBeepEnabled(true)
                                         setOrientationLocked(true)
                                     })
-                                }) {
-                                    Text("Scan QR")
+                                },
+                                    modifier = Modifier.width(120.dp).height(50.dp),
+                                        colors = ButtonDefaults.buttonColors(
+                                        containerColor = btn,          // ✅ button background
+                                ),
+                                ) {
+                                    Text("Scan QR", fontSize = 18.sp)
                                 }
                             }
                         }
@@ -244,6 +321,8 @@ class MainActivity : ComponentActivity() {
                         composable("navbar") {
                             NaviBar(navController)
                         }
+                        composable("chat") { ChatScreen(navController) }
+
                     }
                 }
             }
@@ -346,11 +425,15 @@ class MainActivity : ComponentActivity() {
         var drink by remember { mutableStateOf<DrinkResponse?>(null) }
         var showPopup by remember { mutableStateOf(false) }
         var loading by remember { mutableStateOf(false) }
+        var query by rememberSaveable { mutableStateOf("") }
+        var results by remember { mutableStateOf<List<Coffee>>(emptyList()) }
+        var searching by remember { mutableStateOf(false) }
+        var searchError by remember { mutableStateOf<String?>(null) }
 
-        // ❗ Get SavedStateHandle for Home Route
-        // this remembers the popup state even if user leaves and comes back
-        val savedStateHandle = navController.currentBackStackEntry?.savedStateHandle
-        val hasShownPopup = savedStateHandle?.get<Boolean>("hasShownPopup") ?: false
+        val scope = rememberCoroutineScope()
+
+        // ✅ NEW: popup shown only once (persist for this Home destination)
+        var hasShownPopupOnce by rememberSaveable { mutableStateOf(false) }
 
         // weather state
         var currentTemp by remember { mutableStateOf<Double?>(null) }
@@ -378,15 +461,14 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // ################### POPUP (FIRST TIME ONLY) ###################
-        LaunchedEffect(Unit) {
-            if (!hasShownPopup) {
+        // ################### POPUP (ONLY AFTER LOGIN + ONLY ONCE) ###################
+        LaunchedEffect(fromLogin) {
+            if (fromLogin && !hasShownPopupOnce) {
                 loading = true
                 try {
                     val result = DrinkApi.service.getRandomDrink()
                     drink = result
                 } catch (e: Exception) {
-                    // fallback offline drink
                     drink = DrinkResponse(
                         name = "House Latte",
                         description = "Our special latte, perfect to welcome you back.",
@@ -395,7 +477,6 @@ class MainActivity : ComponentActivity() {
                         img = null,
                         price = 3.50
                     )
-
                     Toast.makeText(
                         context,
                         "Showing sample drink (offline).",
@@ -404,20 +485,26 @@ class MainActivity : ComponentActivity() {
                 } finally {
                     showPopup = drink != null
                     loading = false
-
-                    // ❗ Save popup has been shown
-                    savedStateHandle?.set("hasShownPopup", true)
+                    hasShownPopupOnce = true   // ✅ IMPORTANT
                 }
             }
         }
 
+
+
         // ################### UI ###################
-        Box(Modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0xFFF5ECE4))
+        ) {
             val bgBlur = if (showPopup) 12.dp else 0.dp
+            val screenHeight = LocalConfiguration.current.screenHeightDp.dp
 
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .heightIn(min = screenHeight)
                     .verticalScroll(rememberScrollState())
                     .blur(bgBlur)
             ) {
@@ -427,12 +514,66 @@ class MainActivity : ComponentActivity() {
                 Body()
 
                 Spacer(Modifier.height(20.dp))
-                InputField()
+                InputField(
+                    query = query,
+                    onQueryChange = {
+                        query = it
+                        if (it.isBlank()) {
+                            results = emptyList()
+                            searchError = null
+                        }
+                    },
+                    onSearchClick = {
+                        val q = query.trim()
+                        if (q.isBlank()) return@InputField
+
+                        scope.launch {
+                            searching = true
+                            searchError = null
+                            try {
+                                results = NetworkClient.productApi.searchProducts(q)
+                                Toast.makeText(context, "Found ${results.size} items", Toast.LENGTH_SHORT).show()
+                            } catch (e: Exception) {
+                                searchError = e.localizedMessage ?: "Search failed"
+                                results = emptyList()
+                                Toast.makeText(context, "Error: $searchError", Toast.LENGTH_LONG).show()
+                            } finally {
+                                searching = false
+                            }
+                        }
+                    }
+                )
                 Spacer(Modifier.height(10.dp))
+                if (searching) {
+                    Text("Searching...", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
+                }
+
+                searchError?.let {
+                    Text(it, color = Color.Red, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
+                }
+
+//                if (query.isNotBlank() && results.isEmpty() && !searching && searchError == null) {
+//                    Text("No results for \"$query\"", color = Color.Gray, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
+//                }
+
+                if (results.isNotEmpty()) {
+                    results.take(10).forEach { coffee ->
+                        SearchResultRow(
+                            coffee = coffee,
+                            onClick = {
+                                navController.currentBackStackEntry?.savedStateHandle?.set("coffee", coffee)
+                                navController.navigate("detail")
+                            }
+                        )
+                    }
+                }
+
+
 
                 Text(
                     "Menu",
                     fontWeight = FontWeight.Bold,
+                    color = Color(0xFF381D12),
                     fontSize = 23.sp,
                     modifier = Modifier.padding(15.dp)
                 )
@@ -468,6 +609,7 @@ class MainActivity : ComponentActivity() {
 
                 Text(
                     text = "Signature Food & Drink",
+                    color = Color(0xFF381D12),
                     modifier = Modifier.padding(18.dp),
                     style = TextStyle(fontSize = 22.sp, fontWeight = FontWeight.Bold)
                 )
@@ -502,6 +644,7 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
 
 
 
@@ -582,6 +725,176 @@ class MainActivity : ComponentActivity() {
     }
 
     // tempC in °C, isNight from Calendar
+    // ✅ SCROLLABLE CHAT SCREEN
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    fun ChatScreen(navController: NavHostController) {
+
+        data class UiMsg(val fromUser: Boolean, val text: String)
+
+        val scope = rememberCoroutineScope()
+        var input by remember { mutableStateOf("") }
+        var loading by remember { mutableStateOf(false) }
+        val messages = remember { mutableStateListOf<UiMsg>() }
+
+        val listState = rememberLazyListState()
+
+        LaunchedEffect(messages.size, loading) {
+            if (messages.isNotEmpty()) {
+                listState.animateScrollToItem(messages.size - 1)
+            }
+        }
+
+        fun send(text: String) {
+            val msg = text.trim()
+            if (msg.isBlank()) return
+
+            messages.add(UiMsg(fromUser = true, text = msg))
+            input = ""
+            loading = true
+
+            scope.launch {
+                try {
+                    val res = com.example.coffeeapp.ai.ChatHttp.api.chat(
+                        com.example.coffeeapp.ai.ChatRequest(message = msg)
+                    )
+                    messages.add(UiMsg(fromUser = false, text = res.reply))
+                } catch (e: Exception) {
+                    messages.add(UiMsg(fromUser = false, text = "⚠️ Failed to connect: ${e.message}"))
+                } finally {
+                    loading = false
+                }
+            }
+        }
+
+        @Composable
+        fun Bubble(m: UiMsg) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 6.dp),
+                horizontalArrangement = if (m.fromUser) Arrangement.End else Arrangement.Start
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = if (m.fromUser) Color(0xFF6A4E39) else Color.White,
+                    tonalElevation = 2.dp,
+                    shadowElevation = 3.dp
+                ) {
+                    Text(
+                        text = m.text,
+                        modifier = Modifier.padding(12.dp),
+                        color = if (m.fromUser) Color.White else Color.Black
+                    )
+                }
+            }
+        }
+
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("Coffee Assistant", fontWeight = FontWeight.Bold) },
+                    navigationIcon = {
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color(0xFF6A4E39),
+                        titleContentColor = Color.White,
+                        navigationIconContentColor = Color.White
+                    )
+                )
+            }
+        ) { padding ->
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .background(Color(0xFFF7F1EA))
+            ) {
+                if (messages.isEmpty()) {
+                    Surface(
+                        modifier = Modifier.padding(16.dp),
+                        shape = RoundedCornerShape(18.dp),
+                        color = Color.White,
+                        tonalElevation = 4.dp,
+                        shadowElevation = 6.dp
+                    ) {
+                        Column(Modifier.padding(14.dp)) {
+                            Text("Hi 👋", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                "Ask me about drinks, prices, top-up, scan, and app features.",
+                                color = Color.Gray,
+                                fontSize = 14.sp
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                "Try: “top up” or “How much is Iced Latte?”",
+                                color = Color(0xFF6A4E39),
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
+                }
+
+                LazyColumn(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    state = listState,
+                    contentPadding = PaddingValues(bottom = 12.dp)
+                ) {
+                    items(messages) { m ->
+                        Bubble(m)
+                    }
+                    if (loading) {
+                        item {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 6.dp),
+                                horizontalArrangement = Arrangement.Start
+                            ) {
+                                Text("Typing…", color = Color.Gray, fontSize = 12.sp)
+                            }
+                        }
+                    }
+                }
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedTextField(
+                        value = input,
+                        onValueChange = { input = it },
+                        modifier = Modifier.weight(1f),
+                        placeholder = { Text("Type a message…") },
+                        shape = RoundedCornerShape(20.dp),
+                        singleLine = true
+                    )
+
+                    Spacer(Modifier.width(10.dp))
+
+                    Button(
+                        onClick = { send(input) },
+                        shape = RoundedCornerShape(18.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6A4E39))
+                    ) {
+                        Text("Send", color = Color.White)
+                    }
+                }
+            }
+        }
+    }
+            }
 
 
     // suggestion: "hot" / "cold" / "frappe" / "cake" / null
@@ -651,7 +964,7 @@ class MainActivity : ComponentActivity() {
                         text = "$${"%.2f".format(bal)}",
                         style = TextStyle(
                             fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp,
+                            fontSize = 20.sp,
                             color = Color.White
                         )
                     )
@@ -673,6 +986,7 @@ class MainActivity : ComponentActivity() {
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center,
             text = "What would you like today?",
+            color = Color(0xFF381D12),
             style = TextStyle(
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold
@@ -687,4 +1001,4 @@ class MainActivity : ComponentActivity() {
             // Preview content
         }
     }
-}
+

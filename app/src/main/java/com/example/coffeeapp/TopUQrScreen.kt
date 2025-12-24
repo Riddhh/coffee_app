@@ -1,13 +1,11 @@
 package com.example.coffeeapp.micro
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -25,21 +23,17 @@ fun TopUpQrScreen(navController: NavHostController) {
         ?.savedStateHandle
         ?.get<String>("userId") ?: ""
 
-    val payload = remember(txId, userId) {
-        """{"transactionId":"$txId","userId":"$userId"}"""
-    }
-
-    val qrBitmap = remember(payload) { generateQrBitmap(payload, 700) }
-
     // ✅ Status UI
-    var statusText by remember { mutableStateOf("Waiting for seller verification…") }
+    var statusText by remember { mutableStateOf("Processing top up…") }
     var statusColor by remember { mutableStateOf(Color.Gray) }
     var checking by remember { mutableStateOf(true) }
 
     // ✅ stop polling on back / leaving screen
     var stopPolling by remember { mutableStateOf(false) }
 
-    // ✅ Poll backend for status (read-only)
+    // ✅ prevent calling auto-accept repeatedly
+    var autoAcceptTriggered by remember { mutableStateOf(false) }
+
     LaunchedEffect(txId, userId) {
         if (txId.isBlank() || userId.isBlank()) {
             statusText = "Missing transaction info"
@@ -66,26 +60,41 @@ fun TopUpQrScreen(navController: NavHostController) {
                 }
 
                 if (res.consumed == true) {
-                    statusText = "✅ Payment accepted (consumed)"
-                    statusColor = Color(0xFF2E7D32) // green
+                    statusText = "✅ Payment accepted"
+                    statusColor = Color(0xFF2E7D32)
                     checking = false
+
+                    delay(1000)
+                    stopPolling = true
+                    navController.popBackStack()
                     break
                 } else {
-                    statusText = "Waiting for seller to accept…"
-                    statusColor = Color.Gray
+                    // ✅ Option B: client triggers accept ONCE
+                    if (!autoAcceptTriggered) {
+                        autoAcceptTriggered = true
+                        statusText = "Confirming payment…"
+                        statusColor = Color.Gray
+
+                        NetworkClient.paymentApi.autoAcceptTopUp(
+                            AutoAcceptRequestDto(
+                                userId = userId,
+                                transactionId = txId
+                            )
+                        )
+                    } else {
+                        statusText = "Waiting for confirmation…"
+                        statusColor = Color.Gray
+                    }
                 }
 
             } catch (e: Exception) {
-                // ✅ Most common when leaving screen: ignore so no red flash
                 if (e is CancellationException) return@LaunchedEffect
 
-                // ✅ Don't flash red for temporary issues; keep waiting
-                statusText = "Waiting for seller to accept…"
+                statusText = "Processing…"
                 statusColor = Color.Gray
-                // (Optional: you can log e.message if you want)
             }
 
-            delay(2000) // check every 2 seconds
+            delay(1500)
         }
     }
 
@@ -97,20 +106,16 @@ fun TopUpQrScreen(navController: NavHostController) {
         verticalArrangement = Arrangement.Center
     ) {
 
-        Text("Show QR to seller", style = MaterialTheme.typography.titleLarge)
-        Spacer(Modifier.height(16.dp))
+        Text("Top up in progress", style = MaterialTheme.typography.titleLarge)
+        Spacer(Modifier.height(10.dp))
 
-        Image(
-            bitmap = qrBitmap.asImageBitmap(),
-            contentDescription = "QR Code",
-            modifier = Modifier.size(280.dp)
+        Text(
+            "Transaction ID:\n$txId",
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.bodyMedium
         )
 
         Spacer(Modifier.height(16.dp))
-        Text("Transaction ID:", style = MaterialTheme.typography.titleMedium)
-        Text(txId, textAlign = TextAlign.Center)
-
-        Spacer(Modifier.height(12.dp))
 
         Row(verticalAlignment = Alignment.CenterVertically) {
             if (checking) {
@@ -120,7 +125,7 @@ fun TopUpQrScreen(navController: NavHostController) {
             Text(statusText, color = statusColor)
         }
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(20.dp))
 
         Button(
             onClick = {

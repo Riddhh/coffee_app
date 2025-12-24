@@ -1,5 +1,6 @@
 package com.example.coffeeapp.auth
 
+import android.R.attr.name
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -39,13 +40,17 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun register(email: String, password: String) {
+    fun register(name: String, email: String, password: String) {
         viewModelScope.launch {
             try {
                 _state.value = AuthState(loading = true)
 
                 NetworkClient.authApi.register(
-                    RegisterReq(email, password)
+                    RegisterReq(
+                        name = name.trim(),
+                        email = email.trim(),
+                        password = password
+                    )
                 )
 
                 _state.value = AuthState(isAuthed = true)
