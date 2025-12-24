@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Coffee App</string>
+
+    <string name="setting">ការកំណត់</string>
+    <string name="account_detail">ព័ត៌មានគណនី</string>
+    <string name="personal_information">ព័ត៌មានផ្ទាល់ខ្លួន</string>
+    <string name="order_history">ប្រវត្តិបញ្ជាទិញ</string>
+    <string name="transaction_history">ប្រវត្តិបញ្ជាក់ប្រតិបត្តិការ</string>
+    <string name="app_preference">ចំណូលចិត្តកម្មវិធី</string>
+    <string name="language">ភាសា</string>
+    <string name="notification">ការជូនដំណឹង</string>
+    <string name="about_us">អំពីពួកយើង</string>
+    <string name="logout">ចាកចេញ</string>
+
+    <string name="logout_title">ចាកចេញ</string>
+    <string name="logout_confirm">តើអ្នកប្រាកដថាចង់ចាកចេញទេ?</string>
+    <string name="yes">បាទ/ចាស</string>
+    <string name="no">ទេ</string>
+
+    <string name="language_title">ភាសា</string>
+    <string name="english">អង់គ្លេស</string>
+    <string name="khmer">ខ្មែរ (ភាសាខ្មែរ)</string>
+    <string name="back">ត្រឡប់ក្រោយ</string>
+
+</resources>

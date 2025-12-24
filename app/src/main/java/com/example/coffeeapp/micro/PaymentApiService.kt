@@ -6,17 +6,15 @@ import retrofit2.http.POST
 interface PaymentApiService {
 
     @POST("/api/topup/test")
-    suspend fun topUpTest(
-        @Body request: TopUpRequestDto
-    ): TopUpResponseDto
+    suspend fun topUpTest(@Body request: TopUpRequestDto): TopUpResponseDto
 
     @POST("/api/topup/verify")
-    suspend fun verifyTopUp(
-        @Body request: VerifyReceiptRequestDto
-    ): VerifyReceiptResponseDto
+    suspend fun verifyTopUp(@Body request: VerifyReceiptRequestDto): VerifyReceiptResponseDto
 
     @POST("/api/topup/consume")
-    suspend fun consumeTopUp(
-        @Body request: ConsumeReceiptRequestDto
-    ): ConsumeReceiptResponseDto
+    suspend fun consumeTopUp(@Body request: ConsumeReceiptRequestDto): ConsumeReceiptResponseDto
+
+    @POST("/api/topup/auto-accept")
+    suspend fun autoAcceptTopUp(@Body request: AutoAcceptRequestDto): AutoAcceptResponseDto
 }
+

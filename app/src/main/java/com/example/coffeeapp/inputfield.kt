@@ -12,6 +12,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -24,32 +25,44 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun InputField() {
-    var text by remember { mutableStateOf("") }
+fun InputField(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    onSearchClick: () -> Unit
+) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
         modifier = Modifier.fillMaxWidth()
     ) {
         OutlinedTextField(
-            value = text,
-            onValueChange = { text = it },
+            value = query,
+            onValueChange = onQueryChange,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = Color(0xFF5A3A26),
+                unfocusedBorderColor = Color(0xFFBCA89B),
+                cursorColor = Color(0xFF5A3A26),
+                focusedLabelColor = Color(0xFF5A3A26)
+            ),
             label = { Text("What are you looking for?") },
             modifier = Modifier
                 .weight(1f)
                 .padding(end = 8.dp, bottom = 5.dp, start = 10.dp),
             shape = RoundedCornerShape(16.dp),
+            singleLine = true
+        )
 
-            )
         Button(
-            onClick = {}, modifier = Modifier
+            onClick = onSearchClick,
+            modifier = Modifier
                 .height(55.dp)
-                .padding(end = 10.dp), shape = RoundedCornerShape(15.dp), colors = ButtonDefaults.buttonColors(
+                .padding(end = 10.dp),
+            shape = RoundedCornerShape(15.dp),
+            colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFF5C3321)
             )
         ) {
             Icon(Icons.Filled.Search, contentDescription = null)
-
         }
     }
 }

@@ -1,7 +1,9 @@
 package com.example.coffeeapp
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,9 +14,16 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,6 +55,7 @@ enum class BankType {
     WING
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopUp(navController: NavHostController) {
     var amountText by remember { mutableStateOf("") }
@@ -55,266 +65,296 @@ fun TopUp(navController: NavHostController) {
 
     val coroutineScope = rememberCoroutineScope()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(10.dp)
-    ) {
-        Text(
-            "Top up Your Balance",
-            style = TextStyle(
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold
+    val bg = Color(0xFFF5ECE4)
+    val textBrown = Color(0xFF381D12)
+    val texts = Color(0xFFFBF8F5)
+//    val itemBg = Color(0xFFFBF8F5)
+    val itemBg = Color(0xFF5C3321)
+
+    0xFF5C3321
+    Scaffold(
+        containerColor = bg,
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = { Text("Top Up Your Balance", fontWeight = FontWeight.Bold, textAlign = TextAlign.Center) },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = bg,              // ✅ top bar background
+                    titleContentColor = textBrown     // ✅ title color
+                )
             )
-        )
+        },
 
-        Spacer(Modifier.height(8.dp))
-        Spacer(Modifier.height(24.dp))
-
-        Text(
-            "How much do you want to top up?",
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth(),
-            style = TextStyle(
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Medium
-            )
-        )
-
-        OutlinedTextField(
-            value = amountText,
-            onValueChange = {
-                amountText = it
-                errorMessage = null
-            },
-            label = { Text("Type your balance", style = TextStyle(fontSize = 18.sp)) },
+    ) { paddingValues ->
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            shape = RoundedCornerShape(12.dp),
-            singleLine = true
-        )
-
-        Text(
-            "Payment Method",
-            style = TextStyle(
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-            ),
-            modifier = Modifier.padding(20.dp)
-        )
-
-        // ABA
-        ListItem(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable {
-                    selectedBank = BankType.ABA
+                .fillMaxSize()
+                .background(bg)
+                .padding(paddingValues)
+                .padding(10.dp)
+        ) {
+            OutlinedTextField(
+                value = amountText,
+                onValueChange = {
+                    amountText = it
                     errorMessage = null
                 },
-            leadingContent = {
-                Image(
-                    painterResource(id = R.drawable.aba),
-                    contentDescription = null,
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier.size(90.dp)
-                )
-            },
-            headlineContent = {
-                Text(
-                    "ABA Bank",
-                    style = TextStyle(
-                        fontSize = 21.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = if (selectedBank == BankType.ABA) Color(0xFF0066CC) else Color.Unspecified
-                    )
-                )
-            },
-            supportingContent = {
-                Text(
-                    if (selectedBank == BankType.ABA) "Will pay with ABA" else "Tap to pay with ABA Bank",
-                    style = TextStyle(fontSize = 18.sp)
-                )
-            }
-        )
-
-        // ACLEDA
-        ListItem(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 20.dp)
-                .clickable {
-                    selectedBank = BankType.ACELEDA
-                    errorMessage = null
-                },
-            leadingContent = {
-                Image(
-                    painterResource(id = R.drawable.aceleda),
-                    contentDescription = null,
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier.size(90.dp)
-                )
-            },
-            headlineContent = {
-                Text(
-                    "Aceleda Bank",
-                    style = TextStyle(
-                        fontSize = 21.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = if (selectedBank == BankType.ACELEDA) Color(0xFF0066CC) else Color.Unspecified
-                    )
-                )
-            },
-            supportingContent = {
-                Text(
-                    if (selectedBank == BankType.ACELEDA) "Will pay with Aceleda" else "Tap to pay with Aceleda Bank",
-                    style = TextStyle(fontSize = 18.sp)
-                )
-            }
-        )
-
-        // WING
-        ListItem(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 20.dp)
-                .clickable {
-                    selectedBank = BankType.WING
-                    errorMessage = null
-                },
-            leadingContent = {
-                Image(
-                    painterResource(id = R.drawable.wing),
-                    contentDescription = null,
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier.size(90.dp)
-                )
-            },
-            headlineContent = {
-                Text(
-                    "Wing Bank",
-                    style = TextStyle(
-                        fontSize = 21.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = if (selectedBank == BankType.WING) Color(0xFF0066CC) else Color.Unspecified
-                    )
-                )
-            },
-            supportingContent = {
-                Text(
-                    if (selectedBank == BankType.WING) "Will pay with Wing" else "Tap to pay with Wing Bank",
-                    style = TextStyle(fontSize = 18.sp)
-                )
-            }
-        )
-
-        Spacer(Modifier.height(16.dp))
-
-        if (errorMessage != null) {
-            Text(
-                text = errorMessage!!,
-                color = Color.Red,
-                style = TextStyle(fontSize = 14.sp),
+                label = { Text("Type your balance", style = TextStyle(fontSize = 18.sp)) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
+                    .padding(16.dp),
+                shape = RoundedCornerShape(12.dp),
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color(0xFF5A3A26),
+                    unfocusedBorderColor = Color(0xFFBCA89B),
+                    cursorColor = Color(0xFF5A3A26),
+                    focusedLabelColor = Color(0xFF5A3A26)
+                )
             )
-            Spacer(Modifier.height(8.dp))
-        }
 
-        if (isProcessing) {
             Text(
-                text = "Processing bank payment...",
-                style = TextStyle(fontSize = 16.sp),
+                "Payment Method",
+                style = TextStyle(
+                    fontSize = 22.sp,
+                    color = Color(0xFF381D12),
+                    fontWeight = FontWeight.Bold,
+                ),
+                modifier = Modifier.padding(20.dp)
+            )
+
+
+
+            // ABA
+            ListItem(
+                colors = ListItemDefaults.colors(containerColor = bg),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-            )
-            Spacer(Modifier.height(8.dp))
-        }
-
-        Spacer(Modifier.height(16.dp))
-
-        Button(
-            modifier = Modifier
-                .padding(20.dp)
-                .width(168.dp)
-                .height(50.dp)
-                .align(alignment = Alignment.CenterHorizontally),
-            onClick = {
-                val amount = amountText.toDoubleOrNull()
-
-                if (amount == null || amount <= 0) {
-                    errorMessage = "Please enter a valid amount."
-                    return@Button
-                }
-
-                if (selectedBank == null) {
-                    errorMessage = "Please select a bank."
-                    return@Button
-                }
-
-                errorMessage = null
-                isProcessing = true
-
-                coroutineScope.launch {
-                    try {
-                        val bankName = when (selectedBank) {
-                            BankType.ABA -> "ABA"
-                            BankType.ACELEDA -> "ACELEDA"
-                            BankType.WING -> "WING"
-                            null -> "ABA"
-                        }
-
-                        val userId = "demoUser123"
-
-                        val request = TopUpRequestDto(
-                            userId = userId,
-                            amount = amount,
-                            bank = bankName,
-                            mode = "TEST"
+                    .background(Color(0xFFF5ECE4))
+                    .clickable {
+                        selectedBank = BankType.ABA
+                        errorMessage = null
+                    },
+                leadingContent = {
+                    Image(
+                        painterResource(id = R.drawable.aba),
+                        contentDescription = null,
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier.size(90.dp)
+                    )
+                },
+                headlineContent = {
+                    Text(
+                        "ABA Bank",
+                        style = TextStyle(
+                            fontSize = 21.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (selectedBank == BankType.ABA) Color(0xFFCDA174) else Color(0xFF381D12)
                         )
+                    )
+                },
+                supportingContent = {
+                    Text(
+                        if (selectedBank == BankType.ABA) "Will pay with ABA" else "Tap to pay with ABA Bank",
+                        style = TextStyle(fontSize = 18.sp),
+                        color = Color(0xFFA68C7E)
+                    )
+                }
+            )
 
-                        val response = NetworkClient.paymentApi.topUpTest(request)
+            // ACLEDA
+            ListItem(
+                colors = ListItemDefaults.colors(containerColor = bg),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 20.dp)
+                    .background(Color(0xFFF5ECE4))
+                    .clickable {
+                        selectedBank = BankType.ACELEDA
+                        errorMessage = null
+                    },
+                leadingContent = {
+                    Image(
+                        painterResource(id = R.drawable.aceleda),
+                        contentDescription = null,
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier.size(90.dp)
+                    )
+                },
+                headlineContent = {
+                    Text(
+                        "Aceleda Bank",
+                        style = TextStyle(
+                            fontSize = 21.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (selectedBank == BankType.ACELEDA) Color(0xFFCDA174) else Color(0xFF381D12)
+                        )
+                    )
+                },
+                supportingContent = {
+                    Text(
+                        if (selectedBank == BankType.ACELEDA) "Will pay with Aceleda" else "Tap to pay with Aceleda Bank",
+                        style = TextStyle(fontSize = 18.sp),
+                        color = Color(0xFFA68C7E)
+                    )
+                }
+            )
 
-                        if (response.success) {
-                            // Optional: keep your local history chain
-                            withContext(Dispatchers.IO) {
-                                RealmBlockchainRepository.addTopUpBlock(amount)
+            // WING
+            ListItem(
+                colors = ListItemDefaults.colors(containerColor = bg),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 15.dp)
+                    .background(Color(0xFFF5ECE4))
+                    .clickable {
+                        selectedBank = BankType.WING
+                        errorMessage = null
+                    },
+                leadingContent = {
+                    Image(
+                        painterResource(id = R.drawable.wing),
+                        contentDescription = null,
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier.size(90.dp)
+                    )
+                },
+                headlineContent = {
+                    Text(
+                        "Wing Bank",
+                        style = TextStyle(
+                            fontSize = 21.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (selectedBank == BankType.WING) Color(0xFFCDA174) else Color(0xFF381D12)
+                        )
+                    )
+                },
+                supportingContent = {
+                    Text(
+                        if (selectedBank == BankType.WING) "Will pay with Wing" else "Tap to pay with Wing Bank",
+                        style = TextStyle(fontSize = 18.sp),
+                        color = Color(0xFFA68C7E)
+                    )
+                }
+            )
+
+            Spacer(Modifier.height(16.dp))
+
+            if (errorMessage != null) {
+                Text(
+                    text = errorMessage!!,
+                    color = Color.Red,
+                    style = TextStyle(fontSize = 14.sp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                )
+                Spacer(Modifier.height(8.dp))
+            }
+
+            if (isProcessing) {
+                Text(
+                    text = "Processing bank payment...",
+                    style = TextStyle(fontSize = 16.sp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                )
+                Spacer(Modifier.height(8.dp))
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            Button(
+                modifier = Modifier
+                    .padding(20.dp)
+                    .width(168.dp)
+                    .height(50.dp)
+                    .align(alignment = Alignment.CenterHorizontally)
+                ,
+                onClick = {
+                    val amount = amountText.toDoubleOrNull()
+
+                    if (amount == null || amount <= 0) {
+                        errorMessage = "Please enter a valid amount."
+                        return@Button
+                    }
+
+                    if (selectedBank == null) {
+                        errorMessage = "Please select a bank."
+                        return@Button
+                    }
+
+                    errorMessage = null
+                    isProcessing = true
+
+                    coroutineScope.launch {
+                        try {
+                            val bankName = when (selectedBank) {
+                                BankType.ABA -> "ABA"
+                                BankType.ACELEDA -> "ACELEDA"
+                                BankType.WING -> "WING"
+                                null -> "ABA"
                             }
 
-                            isProcessing = false
+                            val userId = "demoUser123"
 
-                            // ✅ Save data for QR screen
-                            navController.currentBackStackEntry?.savedStateHandle?.set("txId", response.transactionId)
-                            navController.currentBackStackEntry?.savedStateHandle?.set("userId", userId)
+                            val request = TopUpRequestDto(
+                                userId = userId,
+                                amount = amount,
+                                bank = bankName,
+                                mode = "TEST"
+                            )
 
-                            // ✅ Go to QR screen
-                            navController.navigate("topup_qr")
-                        } else {
+                            val response = NetworkClient.paymentApi.topUpTest(request)
+
+                            if (response.success) {
+                                // Optional: keep your local history chain
+                                withContext(Dispatchers.IO) {
+                                    RealmBlockchainRepository.addTopUpBlock(amount)
+                                }
+
+                                isProcessing = false
+
+                                // ✅ Save data for QR screen
+                                navController.currentBackStackEntry?.savedStateHandle?.set(
+                                    "txId",
+                                    response.transactionId
+                                )
+                                navController.currentBackStackEntry?.savedStateHandle?.set(
+                                    "userId",
+                                    userId
+                                )
+
+                                // ✅ Go to QR screen
+                                navController.navigate("topup_qr")
+                            } else {
+                                isProcessing = false
+                                errorMessage = "Payment failed: ${response.message}"
+                            }
+
+                        } catch (e: HttpException) {
                             isProcessing = false
-                            errorMessage = "Payment failed: ${response.message}"
+                            val errBody = e.response()?.errorBody()?.string()
+                            errorMessage = "Server error ${e.code()}: ${errBody ?: e.message()}"
+                        } catch (e: Exception) {
+                            isProcessing = false
+                            errorMessage = "Error calling payment service: ${e.message}"
                         }
-
-                    } catch (e: HttpException) {
-                        isProcessing = false
-                        val errBody = e.response()?.errorBody()?.string()
-                        errorMessage = "Server error ${e.code()}: ${errBody ?: e.message()}"
-                    } catch (e: Exception) {
-                        isProcessing = false
-                        errorMessage = "Error calling payment service: ${e.message}"
                     }
-                }
-            },
-            enabled = !isProcessing,
-        ) {
-            Text(
-                "Continue",
-                style = TextStyle(
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = itemBg,          // ✅ button background
+                ),
+                enabled = !isProcessing,
+            ) {
+                Text(
+                    "Continue",
+                    style = TextStyle(
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
                 )
-            )
+            }
         }
     }
 }

@@ -1,6 +1,7 @@
 // OrderConfirmationScreen.kt
 package com.example.coffeeapp
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -12,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -27,62 +29,83 @@ import com.example.coffeeapp.order.CreateOrderRequest
 import com.example.coffeeapp.order.OrderHttp
 import com.example.coffeeapp.order.OrderItemDto
 
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OrderConfirmationScreen(
     navController: NavHostController
 ) {
     val currency = remember { NumberFormat.getCurrencyInstance() }
 
-    // 🔴 Use the LIVE cart
     val orderItems = cartManager.items
 
-    // Total derived from live cart; recomputes automatically
     val total by remember {
         derivedStateOf { orderItems.sumOf { it.price * it.quantity } }
     }
 
-    // Live balance
     val balance by RealmBlockchainRepository.balanceFlow.collectAsState(initial = 0.0)
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     var isProcessing by remember { mutableStateOf(false) }
 
+    // ✅ Coffee theme colors
+    val bg = Color(0xFFF5ECE4)
+    val surface = Color(0xFFFBF8F5)
+    val brown = Color(0xFF5A3A26)
+    val textBrown = Color(0xFF381D12)
+    val muted = Color(0xFF8C735A)
+    val cardd = Color(0xFFFFF7EE)
+    val border_color = Color(0xFFE3CDB8)
+
     if (isProcessing) {
         AlertDialog(
             onDismissRequest = {},
             confirmButton = {},
-            title = { Text("Processing…") },
+            title = { Text("Processing…", color = textBrown) },
             text = {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                    CircularProgressIndicator(modifier = Modifier.size(20.dp), color = brown)
                     Spacer(Modifier.width(12.dp))
-                    Text("Recording order and updating balance")
+                    Text("Recording order and updating balance", color = textBrown)
                 }
-            }
+            },
+            containerColor = surface
         )
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+        containerColor = bg,
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        topBar = {
+            TopAppBar(
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.Default.ArrowBackIosNew, contentDescription = "Back")
+                    }
+                },
+                title = {
+                    Text(
+                        "Order Confirmation",
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = bg,
+                    titleContentColor = textBrown,
+                    navigationIconContentColor = textBrown
+                )
+            )
+        }
     ) { paddingValues ->
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(16.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = { navController.popBackStack() }) {
-                    Icon(Icons.Default.ArrowBackIosNew, contentDescription = "Back")
-                }
-                Spacer(Modifier.width(4.dp))
-                Text("Order Confirmation", fontSize = 26.sp, style = MaterialTheme.typography.titleLarge)
-            }
 
-            // Balance row
-            Spacer(Modifier.height(8.dp))
+            // ✅ Keep the Balance row (just recolor)
             Text(
                 "Wallet Balance: ${currency.format(balance)}",
                 style = MaterialTheme.typography.bodyLarge,
@@ -102,13 +125,15 @@ fun OrderConfirmationScreen(
                     key = { item -> item.name + item.size }
                 ) { item ->
                     Card(
-                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(2.2.dp, border_color ),
+                        shape = RoundedCornerShape(14.dp),
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 6.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFFF5F5F5)
-                        )
+                            containerColor = cardd // ✅ was gray, now coffee surface
+                        ),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -122,16 +147,21 @@ fun OrderConfirmationScreen(
                                     .padding(end = 12.dp)
                             )
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(item.name, style = MaterialTheme.typography.titleMedium)
+                                Text(
+                                    item.name,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = textBrown
+                                )
                                 Text(
                                     "Size: ${item.size}  x${item.quantity}",
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = Color.Gray
+                                    color = muted
                                 )
                             }
                             Text(
                                 currency.format(item.price * item.quantity),
-                                style = MaterialTheme.typography.titleMedium
+                                style = MaterialTheme.typography.titleMedium,
+                                color = textBrown
                             )
                         }
                     }
@@ -144,8 +174,8 @@ fun OrderConfirmationScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Total", style = MaterialTheme.typography.titleMedium)
-                Text(currency.format(total), style = MaterialTheme.typography.titleMedium)
+                Text("Total", style = MaterialTheme.typography.titleMedium, color = textBrown)
+                Text(currency.format(total), style = MaterialTheme.typography.titleMedium, color = textBrown)
             }
 
             Spacer(Modifier.height(8.dp))
@@ -177,14 +207,12 @@ fun OrderConfirmationScreen(
                     scope.launch {
                         isProcessing = true
                         try {
-                            // Attempt the purchase (mines block + deducts balance)
                             val result = withContext(Dispatchers.Default) {
                                 RealmBlockchainRepository.purchase(order)
                             }
 
                             when (result) {
                                 is RealmBlockchainRepository.PurchaseResult.Success -> {
-                                    // 🔹 STEP A: Get JWT token
                                     val ctx = navController.context
                                     val token = TokenStore.get(ctx)
 
@@ -194,7 +222,6 @@ fun OrderConfirmationScreen(
                                         return@launch
                                     }
 
-                                    // 🔹 STEP B: Send order to Order microservice (3002)
                                     val req = CreateOrderRequest(
                                         items = orderItems.map {
                                             OrderItemDto(
@@ -213,19 +240,13 @@ fun OrderConfirmationScreen(
                                             req = req
                                         )
                                     }.onFailure { e ->
-                                        snackbarHostState.showSnackbar(
-                                            "Server order failed: ${e.message}"
-                                        )
+                                        snackbarHostState.showSnackbar("Server order failed: ${e.message}")
                                     }
 
-                                    // 🔹 STEP C: Keep your existing logic
                                     isProcessing = false
                                     cartManager.clearCart()
 
-                                    val paidAmount = total
-                                    snackbarHostState.showSnackbar(
-                                        "Payment successful • ${currency.format(paidAmount)} deducted"
-                                    )
+                                    snackbarHostState.showSnackbar("Payment successful")
 
                                     navController.navigate("home") {
                                         launchSingleTop = true
@@ -240,7 +261,6 @@ fun OrderConfirmationScreen(
                                 }
 
                                 is RealmBlockchainRepository.PurchaseResult.Error -> {
-                                    // If genesis missing, create and retry once
                                     if (result.cause is IllegalStateException) {
                                         runCatching {
                                             withContext(Dispatchers.Default) {
@@ -251,14 +271,9 @@ fun OrderConfirmationScreen(
                                             when (retry) {
                                                 is RealmBlockchainRepository.PurchaseResult.Success -> {
                                                     isProcessing = false
-                                                    val paidAmount = total
-                                                    cartManager.clearCart() // ✅ also clear after retry success
-                                                    snackbarHostState.showSnackbar(
-                                                        "Payment successful"
-                                                    )
-                                                    navController.navigate("home") {
-                                                        launchSingleTop = true
-                                                    }
+                                                    cartManager.clearCart()
+                                                    snackbarHostState.showSnackbar("Payment successful")
+                                                    navController.navigate("home") { launchSingleTop = true }
                                                 }
                                                 is RealmBlockchainRepository.PurchaseResult.InsufficientBalance -> {
                                                     isProcessing = false
@@ -290,7 +305,13 @@ fun OrderConfirmationScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(55.dp),
-                shape = RoundedCornerShape(14.dp)
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = brown,
+                    contentColor = Color.White,
+                    disabledContainerColor = brown.copy(alpha = 0.5f),
+                    disabledContentColor = Color.White.copy(alpha = 0.7f)
+                )
             ) {
                 Text(
                     if (canConfirm) "Confirm & Finish" else "Insufficient Balance",

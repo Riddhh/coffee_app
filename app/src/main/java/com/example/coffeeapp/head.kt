@@ -2,6 +2,7 @@ package com.example.coffeeapp
 
 import androidx.compose.animation.*
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -42,7 +43,7 @@ fun Head(navController: NavHostController) {
         Spacer(modifier = Modifier.weight(1f))
 
         IconButton(onClick = { navController.navigate("notification") }) {
-            Icon(Icons.Default.Notifications, contentDescription = "Notifications", modifier = Modifier.size(32.dp))
+            Icon(Icons.Default.Notifications, contentDescription = "Notifications", tint = Color(0xFF5C3321), modifier = Modifier.size(32.dp),)
         }
 
         // 🛒 Cart icon with animated badge
@@ -53,7 +54,7 @@ fun Head(navController: NavHostController) {
             contentAlignment = Alignment.TopEnd
         ) {
             IconButton(onClick = { navController.navigate("cart") }) {
-                Icon(Icons.Default.ShoppingCart, contentDescription = "Cart", modifier = Modifier.size(35.dp))
+                Icon(Icons.Default.ShoppingCart, contentDescription = "Cart",tint = Color(0xFF5C3321), modifier = Modifier.size(35.dp))
             }
 
             // fully qualified animation call avoids RowScope confusion
