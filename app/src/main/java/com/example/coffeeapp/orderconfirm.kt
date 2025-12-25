@@ -28,13 +28,19 @@ import com.example.coffeeapp.auth.TokenStore
 import com.example.coffeeapp.order.CreateOrderRequest
 import com.example.coffeeapp.order.OrderHttp
 import com.example.coffeeapp.order.OrderItemDto
+import java.util.Currency
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OrderConfirmationScreen(
     navController: NavHostController
 ) {
-    val currency = remember { NumberFormat.getCurrencyInstance() }
+    val currency = remember {
+        NumberFormat.getCurrencyInstance(Locale.US).apply {
+            currency = Currency.getInstance("USD")
+        }
+    }
 
     val orderItems = cartManager.items
 

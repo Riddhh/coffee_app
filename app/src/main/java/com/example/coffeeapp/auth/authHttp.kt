@@ -19,6 +19,7 @@ object Http {
 
         return Retrofit.Builder()
             .baseUrl("http://10.0.2.2:3001/")
+//            .baseUrl("https://coffeeapp-auth.onrender.com")
             .client(client)
             .addConverterFactory(MoshiConverterFactory.create(moshi))
             .build()

@@ -262,7 +262,7 @@ fun TopUp(navController: NavHostController) {
                 Spacer(Modifier.height(8.dp))
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(10.dp))
 
             Button(
                 modifier = Modifier
