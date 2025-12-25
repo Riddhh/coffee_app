@@ -11,6 +11,8 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout code
@@ -63,6 +65,12 @@ jobs:
             -Pandroid.injected.signing.store.password="$ANDROID_KEYSTORE_PASSWORD" \
             -Pandroid.injected.signing.key.alias="$ANDROID_KEY_ALIAS" \
             -Pandroid.injected.signing.key.password="$ANDROID_KEY_PASSWORD"
+
+      - name: Show APK outputs (debug)
+        run: |
+          find app/build/outputs -type f -name "*.apk" -print
+          ls -lah app/build/outputs/apk || true
+          ls -lah app/build/outputs/apk/release || true
 
       - name: Publish APK to GitHub Release
         uses: softprops/action-gh-release@v2
