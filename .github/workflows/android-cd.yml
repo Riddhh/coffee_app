@@ -23,6 +23,27 @@ jobs:
           java-version: "17"
           cache: gradle
 
+      # ✅ Increase Gradle network timeouts (fix gradle-8.11.1 download timeout)
+      - name: Configure Gradle timeouts
+        run: |
+          mkdir -p ~/.gradle
+          cat >> ~/.gradle/gradle.properties <<'EOF'
+          systemProp.org.gradle.internal.http.connectionTimeout=600000
+          systemProp.org.gradle.internal.http.socketTimeout=600000
+          org.gradle.daemon=false
+          EOF
+
+      # ✅ Extra cache for wrapper + caches (setup-java cache helps, this makes it more reliable)
+      - name: Cache Gradle (wrapper + caches)
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
       - name: Make Gradle executable
         run: chmod +x ./gradlew
 
@@ -37,7 +58,7 @@ jobs:
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
-          ./gradlew clean assembleRelease \
+          ./gradlew clean assembleRelease --no-daemon --stacktrace \
             -Pandroid.injected.signing.store.file="$ANDROID_KEYSTORE_PATH" \
             -Pandroid.injected.signing.store.password="$ANDROID_KEYSTORE_PASSWORD" \
             -Pandroid.injected.signing.key.alias="$ANDROID_KEY_ALIAS" \
