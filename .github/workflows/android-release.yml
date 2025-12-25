@@ -5,28 +5,38 @@ on:
     tags:
       - "v*"
 
+permissions:
+  contents: write
+
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v3
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Set up JDK
-      uses: actions/setup-java@v3
-      with:
-        distribution: 'temurin'
-        java-version: '17'
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
 
-    - name: Grant Execute Permission
-      run: chmod +x ./gradlew
+      - name: Grant Execute Permission
+        run: chmod +x ./gradlew
 
-    - name: Build Release APK
-      run: ./gradlew assembleRelease
+      - name: Build Release APK
+        run: ./gradlew assembleRelease --no-daemon --stacktrace
 
-    - name: Upload APK to GitHub Release
-      uses: softprops/action-gh-release@v2
-      with:
-        files: app/build/outputs/apk/release/app-release.apk
+      - name: Show APK outputs (debug)
+        run: |
+          echo "=== APK FILES ==="
+          find app/build/outputs -type f -name "*.apk" -print
+
+      - name: Upload APK to GitHub Release
+        uses: softprops/action-gh-release@v2
